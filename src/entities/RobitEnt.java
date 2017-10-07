@@ -65,6 +65,7 @@ public class RobitEnt extends BasicEntity{
 		this.maxAnimTime = maxAnimTime;
 		
 		curLocation.set(node.getLocalTranslation());
+		curLocation.add(.5f,0,.5f);
 		
 		//will only trigger before move as started
 		if((curLocation.getX() != (float)robit.getXpos() || curLocation.getZ() != (float)robit.getYpos() || robitIsDead != robit.getIsDead()) && !isMoving) {
@@ -126,7 +127,7 @@ public class RobitEnt extends BasicEntity{
 		else {
 			this.material.setColor("GlowColor",robit.getGlowColor());
 		}
-		
+		curLocation.add(-.5f,0,-.5f);
 		node.setLocalTranslation(curLocation);
 		
 	}

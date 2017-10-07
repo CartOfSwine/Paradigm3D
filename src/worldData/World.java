@@ -10,7 +10,7 @@ import robits.Robit;
 
 import java.lang.Math;
 
-public class World {
+public class World  {
 
 	//holds Robits
 	private Robit[][] population;
@@ -32,7 +32,7 @@ public class World {
 	public final boolean linearActivation = true;
 	public final double smellDistanceModifier = 0.5;
 	//=============================================================================Constructors
-	public World(int size, int numWalls, MindTemplate[] contenders){
+	public World(int size, int numWalls, MindTemplate[] contenders) {
 		this.contenders = contenders;
 
 		WORLD_SIZE = size;
@@ -114,7 +114,7 @@ public class World {
 		Random rnd = new Random();
 		int rndX,rndY,rndNum;
 
-		for(int c = 0; c < 1; c++){
+		for(int c = 0; c < 200; c++){
 			rndX = rnd.nextInt(WORLD_SIZE);
 			rndY = rnd.nextInt(WORLD_SIZE);
 			rndNum = rnd.nextInt(50);
