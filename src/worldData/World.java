@@ -7,6 +7,7 @@ import action.AOE;
 import robits.CheaterException;
 import robits.MindTemplate;
 import robits.Robit;
+import worldData.Obstruction;
 
 import java.lang.Math;
 
@@ -44,7 +45,7 @@ public class World  {
 			for (int x = 0; x < WORLD_SIZE; x++){
 				RobitMap[y][x] = null;
 				resourceMap[y][x] = 0;
-				obstructionMap[y][x] = new Obstruction();
+				obstructionMap[y][x] = new Obstruction(x,y);
 			}
 		}
 		this.nextTickFlag = true;
@@ -166,7 +167,7 @@ public class World  {
 			RobitMap[y][x] = null;
 			resourceMap[y][x] += toKill.getMaxEnergy()/2;
 			resourceMap[y][x] += toKill.getDefence()/2;
-			obstructionMap[y][x] = new Obstruction(ObstructionType.CORPSE);
+			obstructionMap[y][x] = new Obstruction(ObstructionType.CORPSE,x,y);
 		}
 	}
 
@@ -236,6 +237,9 @@ public class World  {
 		if(RobitMap[y][x] != null){
 			RobitMap[y][x].incIncomingDmg(atk,SECURE_KEY);
 			return true;
+		} 
+		else if (!obstructionMap[y][x].isEmpty()) {
+			return obstructionMap[y][x].damage(atk);
 		}
 		return false;       
 	}
@@ -323,14 +327,14 @@ public class World  {
 					}
 				}
 				//if the selected square contains a corpse and we are looking for a coprpse
-				if(obstructionMap[yVal][xVal].type == ObstructionType.CORPSE && minSightDist > distance){
+				if(obstructionMap[yVal][xVal].getType() == ObstructionType.CORPSE && minSightDist > distance){
 					newSightHasTarget = true;
 					minSightDist = distance;
 					newSightSense = calcActivity(senseDistance,(int)distance);
 					newSightAngle = calcAngle(dy,dx);
 				}
 				//if the selected square contains an obsticle and we are looking for one
-				if(obstructionMap[yVal][xVal].type != ObstructionType.EMPTY && minSightDist > distance){
+				if(obstructionMap[yVal][xVal].getType() != ObstructionType.EMPTY && minSightDist > distance){
 					newSightHasTarget = true;
 					minSightDist = distance;
 					newSightSense = calcActivity(senseDistance,(int)distance);
@@ -350,7 +354,7 @@ public class World  {
 					newEnemyTouchSense[i] = true;
 			}
 			newEnergyTouchSense[i] = resourceMap[fc(y+myAOE.locations[i].yMod)][fc(x+myAOE.locations[i].xMod)];
-			newObstructionTouchSense[i] = selectO.curHP;
+			newObstructionTouchSense[i] = selectO.getHP();
 		}   
 		newEnergyTouchSense[4] = resourceMap[y][x];
 		RobitSenses.setSightSense(newSightSense);
@@ -433,13 +437,13 @@ public class World  {
 		if (RobitMap[y][x] != null)
 			return RobitMap[y][x].getColor();
 		if (!obstructionMap[y][x].isEmpty())
-			return obstructionMap[y][x].type.COLOR;
+			return obstructionMap[y][x].getType().COLOR;
 		if (resourceMap[y][x] != 0){
 			float v = resourceMap[y][x]/50;
 			if(v > .9) v = 0.9f;
 			return new ColorRGBA(0f,1-v,1-v,1);
 		}
-		return obstructionMap[y][x].type.COLOR;
+		return obstructionMap[y][x].getType().COLOR;
 	}   
 
 
@@ -452,56 +456,10 @@ public class World  {
 	public int[][] getResourceMap(){
 		return this.resourceMap;
 	}
-	public Obstruction[][]getObstructionMap(){
+	public Obstruction[][] getObstructionMap(){
 		return this.obstructionMap;
 	}
-
-	private class Obstruction{
-		private int curHP;
-		private ObstructionType type;
-
-		public Obstruction(){
-			this.type = ObstructionType.EMPTY;
-			this.curHP = this.type.MAXHP;
-		}
-
-		public Obstruction(ObstructionType type){
-			this.type = type;
-			this.curHP = type.MAXHP;
-		}
-
-		public boolean isEmpty(){
-			return this.type == ObstructionType.EMPTY;
-		}
-
-		@SuppressWarnings("unused")
-		public void damage(int attk, String key)throws CheaterException{
-			if (!key.equals(SECURE_KEY))
-				throw new CheaterException();
-			this.curHP -= (int)attk * this.type.DEFENCE;
-			if(this.curHP <= 0){
-				this.curHP = 0;
-				this.type = ObstructionType.EMPTY;
-			}
-		}
-	}
 }
 
-enum ObstructionType{
-	EMPTY(1,ColorRGBA.White,0),
-	BUSH(1.0, ColorRGBA.Green,20),
-	TREE(0.7,ColorRGBA.Brown,50), //brown color
-	ROCK(0.3, ColorRGBA.Gray,100),
-	CORPSE(1.1, ColorRGBA.Orange,20);
 
-	public final double DEFENCE;
-	public final ColorRGBA COLOR;
-	public final int MAXHP;
-
-	ObstructionType(double defence, ColorRGBA color, int maxHP){
-		this.DEFENCE = defence;
-		this.COLOR = color;
-		this.MAXHP = maxHP;
-	}
-}
 

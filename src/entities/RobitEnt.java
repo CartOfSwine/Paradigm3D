@@ -18,28 +18,23 @@ public class RobitEnt extends BasicEntity{
 	
 	
 	//TODO make robit fly height a static constant
-	@SuppressWarnings("unused")
 	private int maxAnimTime;
 	
 	private Robit robit;
 	private boolean robitIsDead;
-	
-	private int worldSize;
+
 	private Vector3f lastLocation;
-	private Vector3f curLocation;
 	private Vector3f nextLocation;
 	private long startMoveTime;
 	private long endMoveTime;
-	private boolean isMoving;
 	
 	public RobitEnt(AssetManager a, Mesh m, Robit robit, String textureLocation, Node node) {
-		super(node);
+		super(node, robit.getWorldSize());
 		
 		this.TEXTURE_LOCAITON = textureLocation;
 		
 		this.robit = robit;
 		this.robitIsDead = robit.getIsDead();
-		this.worldSize = robit.getWorldSize();
 		
 		this.lastLocation = new Vector3f(robit.getXpos(),0.5f,robit.getYpos());
 		this.curLocation = new Vector3f(robit.getXpos(),0.5f,robit.getYpos());
@@ -61,13 +56,32 @@ public class RobitEnt extends BasicEntity{
 		this.isMoving = false;
 	}
 
-	public void update(int maxAnimTime) {
+	public boolean update(int maxAnimTime) {
 		this.maxAnimTime = maxAnimTime;
 		
-		curLocation.set(node.getLocalTranslation());
-		curLocation.add(.5f,0,.5f);
+		doMove();
 		
-		//will only trigger before move as started
+		updateModel();
+		
+		robitIsDead = robit.getIsDead();
+		return robitIsDead;
+	}
+	
+	private void updateModel() {
+		if(this.robitIsDead)
+		
+		if(this.robit.getIsDead()) {
+			this.material.setColor("GlowColor",ColorRGBA.Black);
+			this.material.setColor("Color",ColorRGBA.Black);
+		}
+		else {
+			this.material.setColor("GlowColor",robit.getGlowColor());
+		}
+	}
+	
+	private void doMove() {
+		curLocation.set(node.getLocalTranslation());
+		
 		if((curLocation.getX() != (float)robit.getXpos() || curLocation.getZ() != (float)robit.getYpos() || robitIsDead != robit.getIsDead()) && !isMoving) {
 			isMoving = true;
 			
@@ -92,48 +106,15 @@ public class RobitEnt extends BasicEntity{
 		}
 		
 		if(isMoving) {
-			long now = System.currentTimeMillis();
-			
-			float dx = nextLocation.getX() - lastLocation.getX();
-			float dy = nextLocation.getY() - lastLocation.getY();
-			float dz = nextLocation.getZ() - lastLocation.getZ();
-			
-			long top = now - startMoveTime;
-			long bottom = endMoveTime- startMoveTime;
-			float timeScale = top/(float)bottom;
-
-			if(timeScale >= 1) {
-				isMoving = false;
-				curLocation.set(nextLocation);
-				lastLocation.set(nextLocation);
-			}
-			else {
-				curLocation.setX(lastLocation.getX() + dx * timeScale);
-				curLocation.setY(lastLocation.getY() + dy * timeScale);
-				curLocation.setZ(lastLocation.getZ() + dz * timeScale);
-				
-			}
-			
-			//so we dont have random robits whipping across the map
-			if(Math.abs(dx) >= worldSize*4/5 || Math.abs(dy) >= worldSize*4/5 || Math.abs(dz) >= worldSize*4/5)
-				curLocation.set(nextLocation);
-			
+			scaleMove(startMoveTime, endMoveTime,lastLocation,nextLocation);
 		}
-
-		if(this.robit.getIsDead()) {
-			this.material.setColor("GlowColor",ColorRGBA.Black);
-			this.material.setColor("Color",ColorRGBA.Black);
-		}
-		else {
-			this.material.setColor("GlowColor",robit.getGlowColor());
-		}
-		curLocation.add(-.5f,0,-.5f);
-		node.setLocalTranslation(curLocation);
-		
 	}
-	public Node getNode() {
-		return this.node;
+	
+	public boolean getIsDead() {
+		return (robitIsDead && curLocation.equals(nextLocation));
 	}
+	
+
 	public Vector3f getLocation() {
 		return this.curLocation;
 	}
