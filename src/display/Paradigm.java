@@ -1,8 +1,10 @@
 package display;
 
+import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
 import com.jme3.post.FilterPostProcessor;
 import com.jme3.post.filters.BloomFilter;
+import com.jme3.post.filters.LightScatteringFilter;
 import com.jme3.scene.Geometry;
 
 import org.lwjgl.opengl.GL11;
@@ -125,25 +127,30 @@ public class Paradigm extends SimpleApplication {
 		
 		//create the sun
 		DirectionalLight sun = new DirectionalLight();
-        sun.setDirection(toStageCords(0,0,0));
+        Vector3f lightDir = new Vector3f(-0.12f, -0.3729129f, 0.74847335f);
+        sun.setDirection(lightDir);
+        sun.setColor(ColorRGBA.White.clone().multLocal(2));
+        addLight(sun);
         
         //create bloom effect
         fpp = new FilterPostProcessor(assetManager);
         bloom = new BloomFilter(BloomFilter.GlowMode.Objects);
-        bloom.setDownSamplingFactor(2.0f);
-        fpp.addFilter(bloom);
+        bloom.setDownSamplingFactor(.75f);
+        //fpp.addFilter(bloom);
+        Vector3f lightPos = lightDir.multLocal(-3000);
+        LightScatteringFilter filter = new LightScatteringFilter(lightPos);
+        fpp.addFilter(filter);
+        viewPort.addProcessor(fpp);
         
         
         //rig up everything
-        rootNode.addLight(sun);
+
         viewPort.addProcessor(fpp);
     }
 	
-	private Vector3f toStageCords(float x, float y, float z) {
-		return new Vector3f(
-				x - this.stageSize/2,
-				y - this.stageSize,
-				z -  this.stageSize/2);
+	private void addLight(DirectionalLight sun) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 	@Override

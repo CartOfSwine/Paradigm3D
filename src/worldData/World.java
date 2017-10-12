@@ -107,8 +107,8 @@ public class World  {
 	//=============================================================================Utilities
 	//-----------------------------------------------------------------placeWalls
 	private void placeWalls(int numWalls){
-		//map[5][6] = new TileContents(ContentType.WALL,100);
-
+		obstructionMap[10][10] = new Obstruction(ObstructionType.WALL,10,10);
+		obstructionMap[11][11] = new Obstruction(ObstructionType.PEDESTAL,11,11);
 	}
 	//-----------------------------------------------------------------placeResources
 	private void placeResources(){

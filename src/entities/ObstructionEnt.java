@@ -26,7 +26,7 @@ public class ObstructionEnt extends BasicEntity{
 				
 		Geometry g = new Geometry("obstructionModel",m);
 		Material t = new Material(a, TEXTURE_LOCAITON);
-		t.setColor("Color",ColorRGBA.Black);
+		t.setColor("Color",ColorRGBA.Gray);
 		g.setMaterial(t);
 		
 		this.material = t;

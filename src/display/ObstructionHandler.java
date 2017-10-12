@@ -4,6 +4,7 @@ import com.jme3.asset.AssetManager;
 import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
+import com.jme3.scene.shape.Cylinder;
 import com.jme3.scene.shape.Sphere;
 
 import entities.ObstructionEnt;
@@ -54,19 +55,20 @@ public class ObstructionHandler {
 			oe = null;
 		}
 		else {
-			Mesh bigCube = new Box(1,1,1);
-			Mesh smallCube = new Box(0.25f,0.25f,0.25f);
-			Mesh bigSphere = new Sphere(10,10,.5f);
 			Mesh selected = null;
 			
 			Node n = new Node();
 			if(od.getType() == ObstructionType.WALL) 
-				selected = smallCube;
+				selected = new Box(.5f,1f,.5f);
 			else if(od.getType() == ObstructionType.PEDESTAL) 
-				selected = bigCube;
-			else if(od.getType() == ObstructionType.CORPSE) {
-				selected = bigSphere;
-			}
+				selected = new Box(0.25f,0.5f,0.25f);
+			else if(od.getType() == ObstructionType.CORPSE) 
+				selected = new Sphere(10,10,.5f);
+			else if(od.getType() == ObstructionType.PILLAR) 
+				selected = new Cylinder(10,10,0.3f,1f,true);
+			else if(od.getType() == ObstructionType.FENCE) 
+				selected = new Box(.5f,.5f,.5f);
+			
 			
 			oe = new ObstructionEnt(
 					assetManager,

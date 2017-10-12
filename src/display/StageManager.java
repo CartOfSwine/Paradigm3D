@@ -17,13 +17,13 @@ public class StageManager {
 		
 		Geometry stage = new Geometry("stage",tile);
 		Material stageMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
-		Texture t = assetManager.loadTexture("Textures/metal-tiles.jpg");
+		Texture t = assetManager.loadTexture("Textures/PurpleTile.jpg");
 		
 		t.setWrap(WrapMode.Repeat);
 		stageMat.setTexture("ColorMap", t);
 		
 		stage.rotate(3*(float)Math.PI/2, 0, 0);
-		stage.setLocalTranslation(new Vector3f(0,0,stageSize));
+		stage.setLocalTranslation(new Vector3f(-0.5f,0,stageSize-.5f));
 		stage.setMaterial(stageMat);
 		
 		rootNode.attachChild(stage);

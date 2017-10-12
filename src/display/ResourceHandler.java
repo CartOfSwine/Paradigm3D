@@ -26,14 +26,14 @@ public class ResourceHandler {
 		resourceMat.setColor("Color", ColorRGBA.Yellow);
 		resourceMat.setColor("GlowColor", ColorRGBA.Yellow);
 		
-		resources = new TerrainQuad("resource_map",stageSize+1,stageSize+1,resourceHeightMap);
+		resources = new TerrainQuad("resource_map",513,stageSize+1,resourceHeightMap);
 		resources.setMaterial(resourceMat);
 		resources.setLocalTranslation(new Vector3f(stageSize/2f,-0.01f,stageSize/2f));
-		resources.setLocalScale(1f, .01f, 1f);
+		resources.setLocalScale(1f, .02f, 1f);
 		
 		Node resNode = new Node();
 		resNode.attachChild(resources);
-		resNode.setLocalTranslation(0,0,0);
+		resNode.setLocalTranslation(-0.5f,0,-0.5f);
 		
 		rootNode.attachChild(resNode);
 		return resources;
