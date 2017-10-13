@@ -237,8 +237,8 @@ public class Robit{
 	public int getStealth()    {return this.STEALTH;} 
 	public int getSense()      {return this.SENSE;}
 	public int getSenseBuff()  {return this.qSenseBuff;}
-	public int getEnergy()       {return this.energy;}
-	public int getMaxEnergy()    {return this.MAX_ENERGY;}
+	public int getEnergy()     {return this.energy;}
+	public int getMaxEnergy()  {return this.MAX_ENERGY;}
 	public int getDefence()    {return this.DEFENCE;}
 
 	public int getXpos()       {return this.xPos;}

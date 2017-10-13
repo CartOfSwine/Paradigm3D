@@ -17,22 +17,26 @@ public class Prefab implements Comparable<Prefab>{
 		this.oMap = new Obstruction[rMap.length][rMap[0].length];
 		decodeOMap(oMapEncoded, oMap);
 		
-		int maxLen = oMap.length;
 		maxY = oMap.length;
+		int maxLen = maxY;
 		
 		int maxXtemp = 0;
 		for(int i = 0; i < oMap.length; i++) {
-			if(oMap[i].length > maxLen) maxLen = oMap[i].length;
 			if(oMap[i].length > maxXtemp)maxXtemp = oMap[i].length;
 		}
 		
 		maxX = maxXtemp;
+		if(maxX > maxLen) maxLen = maxX;
+		
+		if(maxY == 18)
+			System.out.println("here boi");
+		
 		sizeCategory = calcSizeCat((double)maxLen);
 	}
 	
 	private int calcSizeCat(double d) {
 		if(d <= 4) return 0;
-		return 1 + calcSizeCat(Math.floor(d/2.0));
+		return 1 + calcSizeCat(Math.ceil(d/2.0));
 	}
 	
 	private Obstruction[][] decodeOMap(int[][] oMapE, Obstruction[][] oMap) {

@@ -1,6 +1,7 @@
 package worldData;
 
 import com.jme3.math.ColorRGBA;
+
 import java.util.Random;
 
 import action.AOE;
@@ -107,8 +108,70 @@ public class World  {
 	//=============================================================================Utilities
 	//-----------------------------------------------------------------placeWalls
 	private void placeWalls(int numWalls){
-		obstructionMap[10][10] = new Obstruction(ObstructionType.WALL,10,10);
-		obstructionMap[11][11] = new Obstruction(ObstructionType.PEDESTAL,11,11);
+		int total = this.WORLD_SIZE * this.WORLD_SIZE;
+		total = total/60;
+		Random rnd = new Random();
+		
+		int rndX = rnd.nextInt(WORLD_SIZE);
+		int rndY = rnd.nextInt(WORLD_SIZE);
+		
+		for(int i = 0; i < total; i++) {
+			while(!obstructionMap[rndY][rndX].isEmpty()) {
+				rndX = rnd.nextInt(WORLD_SIZE);
+				rndY = rnd.nextInt(WORLD_SIZE);
+			}
+			obstructionMap[rndY][rndX] = new Obstruction(ObstructionType.PEDESTAL,rndX,rndY);
+		}
+		int numSplits = log2n((double)WORLD_SIZE * 4);
+		splitSquare(numSplits, 0,0,WORLD_SIZE,WORLD_SIZE);
+	}
+	
+	private void splitSquare(int numSplits, int x1, int y1, int x2, int y2) {
+		int width = x2 - x1;
+		Random rnd = new Random();
+		if(numSplits <= 0 || width <= 4) {
+			int sizeCat = log2n(width);
+			
+			Prefab toPlace = PrefabList.getRandomPrefab(sizeCat);
+			int maxStartX = width - toPlace.maxX;
+			int maxStartY = width - toPlace.maxY;
+			
+			int x0 = rnd.nextInt(maxStartX+1) + x1;
+			int y0 = rnd.nextInt(maxStartY+1) + y1;
+
+			Obstruction[][] oMap = toPlace.oMap;
+			int[][] rMap = toPlace.rMap;
+
+			for(int y = 0; y < rMap.length; y++) {
+				for (int x = 0; x < rMap[y].length; x++) {
+					obstructionMap[y0 + y][x0 + x] = new Obstruction(oMap[y][x].getType(),x0 + x,y0 + y);
+					if(rMap[y][x] != 0)
+						resourceMap[y0+y][x0+x] = rMap[y][x]; 
+				}
+			}
+			
+		}
+		else {
+			int total = numSplits - 1;
+			int newSplits = rnd.nextInt(total+1);
+			splitSquare(newSplits,x1,y1,x1+width/2,y1+width/2);
+			
+			total -= newSplits;
+			newSplits = rnd.nextInt(total+1);
+			splitSquare(newSplits,x1,y1+width/2,x1+width/2,y2);
+			
+			total -= newSplits;
+			newSplits = rnd.nextInt(total+1);
+			splitSquare(newSplits,x1+width/2,y1+width/2,x2,y2);
+			
+			total -= newSplits;
+			splitSquare(total,x1+width/2,y1,x2,y1 + width/2);
+		}
+	}
+	
+	private int log2n(double d) {
+		if(d <= 4) return 0;
+		return 1 + log2n(Math.ceil(d/2.0));
 	}
 	//-----------------------------------------------------------------placeResources
 	private void placeResources(){

@@ -21,7 +21,7 @@ public class Paradigm extends SimpleApplication {
 	private World sim1;
 	
 	//MUST BE A POWER OF 2!!!!!!!
-	private final int stageSize = 128;
+	private final int stageSize = 64;
 	
 	private final static int STEP_TIME = 300;
 	

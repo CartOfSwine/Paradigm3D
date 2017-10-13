@@ -72,7 +72,7 @@ public class RobitEnt extends BasicEntity{
 		
 		if(this.robit.getIsDead()) {
 			this.material.setColor("GlowColor",ColorRGBA.Black);
-			this.material.setColor("Color",ColorRGBA.Black);
+			this.material.setColor("Color",ColorRGBA.Gray);
 		}
 		else {
 			this.material.setColor("GlowColor",robit.getGlowColor());
