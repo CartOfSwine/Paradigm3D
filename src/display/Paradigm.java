@@ -73,12 +73,14 @@ public class Paradigm extends SimpleApplication {
 		//set up two mind objects for the opposing players
 		MindTemplate[] contenders = new MindTemplate[] {
 				new ExampleGrazer(),
-				new ExampleHunter()
+				new ExampleHunter(),
+				new Destroyer()
 		};
 		//define how many of each creature type will spawn
 		int[] populations = new int[] {
-				100,
-				10
+				0,
+				0,
+				1
 		};
         
         //create the simulation with the players

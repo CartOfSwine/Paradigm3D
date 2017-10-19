@@ -21,8 +21,8 @@ public class ObstructionEnt extends BasicEntity{
 		super(node,worldSize);
 		
 		this.TEXTURE_LOCAITON = textureLocation;
-		this.obstruction = o;
-		this.isDestroyed = o.getHP() > 0;
+		this.obstruction = new Obstruction(o);
+		this.isDestroyed = this.obstruction.getHP() > 0;
 				
 		Geometry g = new Geometry("obstructionModel",m);
 		Material t = new Material(a, TEXTURE_LOCAITON);

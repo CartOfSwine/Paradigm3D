@@ -108,7 +108,7 @@ public class World  {
 	//=============================================================================Utilities
 	//-----------------------------------------------------------------placeWalls
 	private void placeWalls(int numWalls){
-		int total = this.WORLD_SIZE * this.WORLD_SIZE;
+		/*int total = this.WORLD_SIZE * this.WORLD_SIZE;
 		total = total/60;
 		Random rnd = new Random();
 		
@@ -121,8 +121,8 @@ public class World  {
 				rndY = rnd.nextInt(WORLD_SIZE);
 			}
 			obstructionMap[rndY][rndX] = new Obstruction(ObstructionType.PEDESTAL,rndX,rndY);
-		}
-		int numSplits = log2n((double)WORLD_SIZE * 4);
+		}*/
+		int numSplits = log2n((double)WORLD_SIZE * 2);
 		splitSquare(numSplits, 0,0,WORLD_SIZE,WORLD_SIZE);
 	}
 	
@@ -175,15 +175,19 @@ public class World  {
 	}
 	//-----------------------------------------------------------------placeResources
 	private void placeResources(){
+		int total = this.WORLD_SIZE * this.WORLD_SIZE;
+		total = total/60;
 		Random rnd = new Random();
-		int rndX,rndY,rndNum;
-
-		for(int c = 0; c < 200; c++){
-			rndX = rnd.nextInt(WORLD_SIZE);
-			rndY = rnd.nextInt(WORLD_SIZE);
-			rndNum = rnd.nextInt(50);
-
-			resourceMap[rndY][rndX] = rndNum;
+		
+		int rndX = rnd.nextInt(WORLD_SIZE);
+		int rndY = rnd.nextInt(WORLD_SIZE);
+		
+		for(int i = 0; i < total; i++) {
+			while(!(resourceMap[rndY][rndX] == 0)) {
+				rndX = rnd.nextInt(WORLD_SIZE);
+				rndY = rnd.nextInt(WORLD_SIZE);
+			}
+			resourceMap[rndY][rndX] = rnd.nextInt(20) + 20 ;
 		}
 	}
 	//-----------------------------------------------------------------tick
@@ -417,7 +421,10 @@ public class World  {
 					newEnemyTouchSense[i] = true;
 			}
 			newEnergyTouchSense[i] = resourceMap[fc(y+myAOE.locations[i].yMod)][fc(x+myAOE.locations[i].xMod)];
-			newObstructionTouchSense[i] = selectO.getHP();
+			if(selectO.isEmpty())
+				newObstructionTouchSense[i] = 0;
+			else
+				newObstructionTouchSense[i] = selectO.getHP();
 		}   
 		newEnergyTouchSense[4] = resourceMap[y][x];
 		RobitSenses.setSightSense(newSightSense);

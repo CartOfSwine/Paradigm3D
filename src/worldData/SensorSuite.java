@@ -9,7 +9,7 @@ public class SensorSuite{
      3   |   Left
    */
    //NOTE: all smell senses have (smellEfficiencyCoeficent, a var declared in the World class) the effective range of hearing and sight
-   private int[] energySmellSense;       //same idea as hearing except that the creature can detect the presence of energy 
+   private int[] energySmellSense;     //same idea as hearing except that the creature can detect the presence of energy 
                                        //the difference is that activity is muiltiplied by the (ammount of energy)/50. Thus grass will smell a little and whole corpses a lot   
    private int[] allySmellSense;       //same deal as the others. 4 items representing directions. yadda yadda
                                        //only detects members of the same species. Not affected by the stealth stat
@@ -17,7 +17,7 @@ public class SensorSuite{
    
    //adjacency senses                                    
    private int[] obstructionTouchSense;//4 ints in the same layout as before, except that the ints are the health of the obstruction instead of the distance
-   private int[] energyTouchSense;       //has 5 ints, the fifth represents the tile under the creature
+   private int[] energyTouchSense;     //has 5 ints, the fifth represents the tile under the creature
    private boolean[] allyTouchSense;   //boolean wether or not there is an ally adjacent to the current position                                    
    private boolean[] enemyTouchSense;  //booleans for detecting enemies by touch
    

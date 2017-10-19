@@ -1,6 +1,6 @@
 package worldData;
 
-public class Obstruction {
+public class Obstruction implements Cloneable{
 	private int curHP;
 	private ObstructionType type;
 	private int xPos;
@@ -18,6 +18,13 @@ public class Obstruction {
 		this.curHP = type.MAXHP;
 		this.xPos = x;
 		this.yPos = y;
+	}
+	
+	public Obstruction(Obstruction that) {
+		this.type = that.type;
+		this.curHP = that.curHP;
+		this.xPos = that.xPos;
+		this.yPos = that.yPos;
 	}
 
 	public boolean isEmpty(){

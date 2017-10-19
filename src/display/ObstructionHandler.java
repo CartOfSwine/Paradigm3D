@@ -34,18 +34,29 @@ public class ObstructionHandler {
 		
 		for(int z = 0; z < oMap.length; z++) {
 			for (int x = 0; x < oMap[0].length; x++) {
+				if(obstructions[z][x] != null) {
+					if(obstructions[z][x].update()) {
+						rootNode.detachChild(obstructions[z][x].getNode());
+						obstructions[z][x] = null;
+					}
+				}
+				
+				
 				//if there is a new obstruction at that location
 				if(obstructions[z][x] == null && oMap[z][x].getType() != ObstructionType.EMPTY) {
 					obstructions[z][x] = makeNew(assetManager, sim.WORLD_SIZE,oMap[z][x],obstructions[z][x],rootNode);
+				}
+				//there is an entitiy but the slot is empty
+				else if(obstructions[z][x] != null && oMap[z][x].isEmpty()) {
+					rootNode.detachChild(obstructions[z][x].getNode());
+					obstructions[z][x] = null;
 				}
 				//there is allready one there but its not what we have
 				else if(obstructions[z][x] != null && oMap[z][x].getType() != obstructions[z][x].getObstruction().getType()) {
 					obstructions[z][x] = makeNew(assetManager, sim.WORLD_SIZE,oMap[z][x],obstructions[z][x],rootNode);
 				}
-				//there is an entitiy but not but the slot is empty
-				else if(obstructions[z][x] != null && oMap[z][x].isEmpty()) {
-					obstructions[z][x] = null;
-				}
+				
+				
 			}
 		}
 	}
