@@ -1,4 +1,4 @@
-package worldData;
+package action;
 
 public class CordModifier{
    public final int xMod;

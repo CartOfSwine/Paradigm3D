@@ -2,11 +2,11 @@ package worldData;
 
 import com.jme3.math.ColorRGBA;
 
+import playerMinds.MindTemplate;
+
 import java.util.Random;
 
-import action.AOE;
 import robits.CheaterException;
-import robits.MindTemplate;
 import robits.Robit;
 import worldData.Obstruction;
 
@@ -22,8 +22,9 @@ public class World  {
 
 	private String SECURE_KEY = "password";
 
+	//Super important note: Coordinates 0,0 is in the UPPER left hand corner of the map. Y values increase as you go down (for the sake of arrays and a few other things)
 	private Robit[][] RobitMap;
-	private int[][] resourceMap;
+	private int[][] energyMap;
 	private Obstruction[][] obstructionMap;
 
 	private boolean nextTickFlag; 
@@ -40,19 +41,19 @@ public class World  {
 		WORLD_SIZE = size;
 		RobitMap = new Robit[WORLD_SIZE][WORLD_SIZE];
 		obstructionMap = new Obstruction[WORLD_SIZE][WORLD_SIZE];
-		resourceMap = new int[WORLD_SIZE][WORLD_SIZE];  
+		energyMap = new int[WORLD_SIZE][WORLD_SIZE];  
 
 		for (int y = 0; y < WORLD_SIZE; y++){
 			for (int x = 0; x < WORLD_SIZE; x++){
 				RobitMap[y][x] = null;
-				resourceMap[y][x] = 0;
+				energyMap[y][x] = 0;
 				obstructionMap[y][x] = new Obstruction(x,y);
 			}
 		}
 		this.nextTickFlag = true;
 
 		placeWalls(numWalls);
-		placeResources();
+		placeEnergys();
 	}
 
 	//Construction is broken up into two phases. this is because Robits need a referance to the world they exist in
@@ -108,8 +109,8 @@ public class World  {
 	//=============================================================================Utilities
 	//-----------------------------------------------------------------placeWalls
 	private void placeWalls(int numWalls){
-		/*int total = this.WORLD_SIZE * this.WORLD_SIZE;
-		total = total/60;
+		int total = this.WORLD_SIZE * this.WORLD_SIZE;
+		total = total/120;
 		Random rnd = new Random();
 		
 		int rndX = rnd.nextInt(WORLD_SIZE);
@@ -121,7 +122,7 @@ public class World  {
 				rndY = rnd.nextInt(WORLD_SIZE);
 			}
 			obstructionMap[rndY][rndX] = new Obstruction(ObstructionType.PEDESTAL,rndX,rndY);
-		}*/
+		}
 		int numSplits = log2n((double)WORLD_SIZE * 2);
 		splitSquare(numSplits, 0,0,WORLD_SIZE,WORLD_SIZE);
 	}
@@ -146,7 +147,7 @@ public class World  {
 				for (int x = 0; x < rMap[y].length; x++) {
 					obstructionMap[y0 + y][x0 + x] = new Obstruction(oMap[y][x].getType(),x0 + x,y0 + y);
 					if(rMap[y][x] != 0)
-						resourceMap[y0+y][x0+x] = rMap[y][x]; 
+						energyMap[y0+y][x0+x] = rMap[y][x]; 
 				}
 			}
 			
@@ -173,8 +174,8 @@ public class World  {
 		if(d <= 4) return 0;
 		return 1 + log2n(Math.ceil(d/2.0));
 	}
-	//-----------------------------------------------------------------placeResources
-	private void placeResources(){
+	//-----------------------------------------------------------------placeEnergys
+	private void placeEnergys(){
 		int total = this.WORLD_SIZE * this.WORLD_SIZE;
 		total = total/60;
 		Random rnd = new Random();
@@ -183,11 +184,11 @@ public class World  {
 		int rndY = rnd.nextInt(WORLD_SIZE);
 		
 		for(int i = 0; i < total; i++) {
-			while(!(resourceMap[rndY][rndX] == 0)) {
+			while(!(energyMap[rndY][rndX] == 0)) {
 				rndX = rnd.nextInt(WORLD_SIZE);
 				rndY = rnd.nextInt(WORLD_SIZE);
 			}
-			resourceMap[rndY][rndX] = rnd.nextInt(20) + 20 ;
+			energyMap[rndY][rndX] = rnd.nextInt(20) + 20 ;
 		}
 	}
 	//-----------------------------------------------------------------tick
@@ -232,8 +233,8 @@ public class World  {
 
 		if(RobitMap[y][x] != null){
 			RobitMap[y][x] = null;
-			resourceMap[y][x] += toKill.getMaxEnergy()/2;
-			resourceMap[y][x] += toKill.getDefence()/2;
+			energyMap[y][x] += toKill.getMaxEnergy()/2;
+			energyMap[y][x] += toKill.getDefence()/2;
 			obstructionMap[y][x] = new Obstruction(ObstructionType.CORPSE,x,y);
 		}
 	}
@@ -285,11 +286,11 @@ public class World  {
 		int x = fc(xVal);
 		int y = fc(yVal);
 
-		int ammt = resourceMap[y][x];
+		int ammt = energyMap[y][x];
 		if (ammt > maxAmmt)
 			ammt = maxAmmt;
 
-		resourceMap[y][x] -= ammt;
+		energyMap[y][x] -= ammt;
 		return ammt;
 	}
 
@@ -312,191 +313,8 @@ public class World  {
 	}
 
 	//-----------------------------------------------------------------feedSensoryData
-	private void feedSensorData(Robit c){   //sorry to anyone trying to read this. needed it to run fast AF so i klueged the whole thing into the one loop set
-		int senses,senseBuff,senseDistance,x,y,dx,dy,xVal,yVal,otherStealth,otherStealthAddition;
-		double distance, stealthedDistance;
-
-		SensorSuite RobitSenses = c.getSensorSuite();
-		senses = c.getSense();                          //sense stat
-		x = fc(c.getXpos());                            //xpos of Robit
-		y = fc(c.getYpos());                            //ypos of Robit
-		senseBuff = c.getSenseBuff();
-		senseDistance = (int)((baseSensorRange + (senses-100)/10.0)*((100+senseBuff)/100.0)) + 1;//max sensory distance
-
-		double minSightDist = 20000000;                 //the smallest distance to a sight target
-		SightTarget sightType = RobitSenses.getSightTargetType();
-		int smellMaxRange;
-
-		int newSightSense = 0;
-		int newSightAngle = 0;
-		boolean newSightHasTarget = false;
-
-		int[] newHearingSense = new int[4];
-		int[] newEnergySmellSense = new int[4];
-		int[] newEnemySmellSense = new int[4];
-		int[] newAllySmellSense = new int[4];
-
-		int[] newObstructionTouchSense = new int[4];
-		int[] newEnergyTouchSense = new int[5];
-		boolean[] newEnemyTouchSense = new boolean[4];
-		boolean[] newAllyTouchSense = new boolean[4]; 
-
-		for(int xv = x-senseDistance;xv <= x+senseDistance;xv++){ //loop through a box around the Robit checking each square's contents
-			for(int yv = y-senseDistance;yv <= y+senseDistance;yv++){
-				xVal = fc(xv);                            //the currently scanning square cords after wrapping sides
-				yVal = fc(yv); 
-				dx = x-xv;                                //the difference in xvals
-				dy = y-yv;                                //the difference in yvals
-
-				//distance formula
-				distance = Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
-				smellMaxRange = (int)(senseDistance * smellDistanceModifier); //smell is short range, factor in the range limiter
-
-
-				//if we found a Robit other than the current Robit
-				if(RobitMap[yVal][xVal] != null && (xVal != x && yVal != y)){     //handle if tile contains Robit
-					Robit o = RobitMap[yVal][xVal];                             //the Robit in scanning range
-
-					otherStealth = o.getStealth();                                    //others stealth stat
-					otherStealthAddition = (otherStealth-100)/10;
-
-					stealthedDistance = distance + (otherStealth-100)/10;             //the distance factoring in o's stealth stat
-
-
-					if(c.getSpecies().equals(o.getSpecies())){
-						populateSmellSenseArray(newAllySmellSense,smellMaxRange,dx,dy,1);             
-						if((sightType == SightTarget.ALLY || sightType == SightTarget.ROBIT) && minSightDist > distance){
-							newSightHasTarget = true;
-							minSightDist = distance;
-							newSightSense = calcActivity(senseDistance,(int)distance);
-							newSightAngle = calcAngle(dy,dx);
-						}
-					}
-					else{                       
-						populateSmellSenseArray(newEnemySmellSense,smellMaxRange,dx+otherStealthAddition,dy+otherStealthAddition,1);
-						if((sightType == SightTarget.ENEMY || sightType == SightTarget.ROBIT) && minSightDist > stealthedDistance){
-							newSightHasTarget = true;
-							minSightDist = stealthedDistance;
-							newSightSense = calcActivity(senseDistance,(int)stealthedDistance);
-							newSightAngle = calcAngle(dy+otherStealthAddition,dx+otherStealthAddition);
-						}
-					} 
-					populateSmellSenseArray(newHearingSense,senseDistance,dx+otherStealthAddition,dy+otherStealthAddition,1);
-				}
-				//if there is a resource patch in the selected square
-				if(resourceMap[yVal][xVal] > 0){
-					populateSmellSenseArray(newEnergySmellSense,smellMaxRange,dx,dy,resourceMap[yVal][xVal]/50.0);
-					if(sightType == SightTarget.ENERGY && minSightDist > distance){
-						newSightHasTarget = true;
-						minSightDist = distance;
-						newSightSense = (int)(calcActivity(senseDistance,(int)distance) * resourceMap[yVal][xVal]/50.0);
-						newSightAngle = calcAngle(dy,dx);
-					}
-				}
-				//if the selected square contains a corpse and we are looking for a coprpse
-				if(obstructionMap[yVal][xVal].getType() == ObstructionType.CORPSE && minSightDist > distance){
-					newSightHasTarget = true;
-					minSightDist = distance;
-					newSightSense = calcActivity(senseDistance,(int)distance);
-					newSightAngle = calcAngle(dy,dx);
-				}
-				//if the selected square contains an obsticle and we are looking for one
-				if(obstructionMap[yVal][xVal].getType() != ObstructionType.EMPTY && minSightDist > distance){
-					newSightHasTarget = true;
-					minSightDist = distance;
-					newSightSense = calcActivity(senseDistance,(int)distance);
-					newSightAngle = calcAngle(dy,dx);
-				}
-			}
-		}  
-		//populate touch senses
-		AOE myAOE = AOE.ADJACENT;
-		for(int i = 0; i < myAOE.locations.length;i++){
-			Robit selectC = RobitMap[fc(y+myAOE.locations[i].yMod)][fc(x+myAOE.locations[i].xMod)];
-			Obstruction selectO = obstructionMap[fc(y+myAOE.locations[i].yMod)][fc(x+myAOE.locations[i].xMod)];         
-			if(selectC != null){
-				if(selectC.getSpecies().equals(c.getSpecies()))
-					newAllyTouchSense[i] = true;
-				else
-					newEnemyTouchSense[i] = true;
-			}
-			newEnergyTouchSense[i] = resourceMap[fc(y+myAOE.locations[i].yMod)][fc(x+myAOE.locations[i].xMod)];
-			if(selectO.isEmpty())
-				newObstructionTouchSense[i] = 0;
-			else
-				newObstructionTouchSense[i] = selectO.getHP();
-		}   
-		newEnergyTouchSense[4] = resourceMap[y][x];
-		RobitSenses.setSightSense(newSightSense);
-		RobitSenses.setSightAngle(newSightAngle);
-		RobitSenses.setSightHasTarget(newSightHasTarget);
-
-		RobitSenses.setHearingSense(newHearingSense);
-		RobitSenses.setEnergySmellSense(newEnergySmellSense);
-		RobitSenses.setEnemySmellSense(newEnemySmellSense);
-		RobitSenses.setAllySmellSense(newAllySmellSense);
-		RobitSenses.setObstructionTouchSense(newObstructionTouchSense);
-		RobitSenses.setEnergyTouchSense(newEnergyTouchSense);
-		RobitSenses.setEnemyTouchSense(newEnemyTouchSense);
-		RobitSenses.setAllyTouchSense(newAllyTouchSense);
-	}
-
-	//-----------------------------------------------------------------calcAngle
-	private int calcAngle(int dy, int dx){
-		//rewrite this when you have a moment. You were on a plane when you wrote this and were running
-		//on 1.5 hrs of sleep. NEEDS POLISH. Its way to klueged rn 
-
-		dx = dx * -1; //im not sure why i have to do this tbh. 
-
-		if(dx == 0){
-			if(dy > 0)
-				return 90;
-			if(dy < 0)
-				return 270;
-		}
-		if(dy == 0 && dx < 0)
-			return 180;
-
-		int tempAngle = (int)Math.toDegrees(Math.atan((dy/(double)dx)));
-
-		if(dy < 0 && dx < 0)
-			tempAngle += 180;
-		else if(dy > 0 && dx < 0)
-			tempAngle = -1*tempAngle + 90;
-		else if(dy < 0 && dx > 0)
-			tempAngle += 360;
-
-		return tempAngle;
-	}
-
-	//-----------------------------------------------------------------populateSmellSenseArray
-	private void populateSmellSenseArray(int[] ara, int maxRange, int dx, int dy, double muiltiplier){
-		double d = Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
-
-		//
-		if(Math.abs(dy) <= Math.abs(dx) && dx > 0)
-			ara[3] +=(int)(calcActivity(maxRange,d-1)*muiltiplier);
-		if(Math.abs(dy) <= Math.abs(dx) && dx < 0)
-			ara[1] +=(int)(calcActivity(maxRange,d-1)*muiltiplier);     
-		if(Math.abs(dy) >= Math.abs(dx) && dy > 0)
-			ara[0] +=(int)(calcActivity(maxRange,d-1)*muiltiplier);
-		if(Math.abs(dy) >= Math.abs(dx) && dy < 0)
-			ara[2] +=(int)(calcActivity(maxRange,d-1)*muiltiplier);
-
-	}
-
-	//-----------------------------------------------------------------calcActivity
-	private int calcActivity(int maxSensorRange, double measuredRange){
-		int activity;
-		if(this.linearActivation)
-			activity = (int)(-1.0 * measuredRange * (100.0/maxSensorRange) + 100.0);
-		else
-			activity = (int)(-1* Math.pow(measuredRange - maxSensorRange,3) * (100.0/Math.pow(maxSensorRange,3)));
-		if(activity < 0)
-			activity = 0;
-		if(activity > 100)
-			activity = 100;
-		return activity;
+	private void feedSensorData(Robit c){  
+		c.getSensorSuite().updateSenses(this, c);
 	}
 
 	//=============================================================================Gets/Sets
@@ -508,8 +326,8 @@ public class World  {
 			return RobitMap[y][x].getColor();
 		if (!obstructionMap[y][x].isEmpty())
 			return obstructionMap[y][x].getType().COLOR;
-		if (resourceMap[y][x] != 0){
-			float v = resourceMap[y][x]/50;
+		if (energyMap[y][x] != 0){
+			float v = energyMap[y][x]/50;
 			if(v > .9) v = 0.9f;
 			return new ColorRGBA(0f,1-v,1-v,1);
 		}
@@ -523,8 +341,8 @@ public class World  {
 	public Robit[][] getRobitMap(){
 		return this.RobitMap;
 	}
-	public int[][] getResourceMap(){
-		return this.resourceMap;
+	public int[][] getEnergyMap(){
+		return this.energyMap;
 	}
 	public Obstruction[][] getObstructionMap(){
 		return this.obstructionMap;

@@ -1,11 +1,12 @@
-package robits;
+package playerMinds;
 
 import java.util.Random;
 
 import com.jme3.math.ColorRGBA;
 
 import action.Action;
-import worldData.SensorSuite;
+import robits.Robit;
+import robits.SensorSuite;
 
 
 public class Destroyer implements MindTemplate{
@@ -13,18 +14,18 @@ public class Destroyer implements MindTemplate{
    private Robit robit;
    private ColorRGBA color = ColorRGBA.Green;
    
-   private int oldness;
+   //private int oldness;
    
    //{MAX_HEALTH, MAX_ENERGY, ATTACK, DEFENCE, SPEED, EAT, SENSE, STEALTH}
    private int[] stats= {150,150,200,50,100,50,100,0};
    private final String species = "Destroyer"; 
    
    public Destroyer(){
-	   oldness = 0;
+	  //oldness = 0;
    }
    
    public void tick(){
-         oldness++;
+         //oldness++;
          
          SensorSuite senses = this.robit.getSensorSuite();
          int[] energyTouchSense = senses.getEnergyTouchSense();

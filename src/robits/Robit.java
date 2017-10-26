@@ -5,8 +5,8 @@ import java.util.LinkedList;
 //import java.util.concurrent.*;
 
 import action.Action;
-import worldData.CordModifier;
-import worldData.SensorSuite;
+import action.CordModifier;
+import playerMinds.MindTemplate;
 import worldData.World;
 
 public class Robit{
@@ -29,12 +29,12 @@ public class Robit{
 	private final int ATTACK;     	//increases effectivness of attack actions. increases attack efficiency somewhat
 	private final int DEFENCE;    	//reduces incoming damage per action
 	private final int SPEED;      	//reduces costs of movement
-	private final int EAT;        	//increases resources gained from eating
+	private final int EAT;        	//increases energy gained from eating
 	private final int SENSE;      	//increases the creature's sensory distance
 									//maximum sensory distance = 7 + (senses-100)/10
 									//sensory activity is determined with either
 									//A = -(D-S)^3 * 100/(S^3) or
-									//A = -D*(100/S)+100  depending on whether sensor type is set to linear or nonlinear
+									//A = -D*(100/S)+100  depending on whether sensor type is set to linear or nonlinear (Allways linear in current version)
 									//A = activity (0-100 min/max)
 									//D = distance = sqrt(dY^2 + dX^2)         (+(stealth-100)/10 depending on the stat) 
 									//S = maximum sensor distance
@@ -108,15 +108,15 @@ public class Robit{
 		int energyCost = toDo.baseCost;
 
 		if (toDo.isMovement())
-			energyCost = energyCost * (200-SPEED)/100;
+			energyCost = energyCost * (250-SPEED)/100;
 		else if (toDo.isAttack())
-			energyCost = energyCost * (200-ATTACK)/100;
+			energyCost = energyCost * (250-ATTACK)/100;
 		else if (toDo.isDefence())
-			energyCost = energyCost * (200-DEFENCE)/100; 
+			energyCost = energyCost * (250-DEFENCE)/100; 
 		else if (toDo.isEat())
-			energyCost = energyCost * (200-EAT)/100;
+			energyCost = energyCost * (250-EAT)/100;
 		else if (toDo.isSense())
-			energyCost = energyCost * (200-SENSE)/100;
+			energyCost = energyCost * (250-SENSE)/100;
 
 		energyCost = energyCost * actionQueue.size();
 
@@ -147,7 +147,6 @@ public class Robit{
 
 		this.qSenseBuff += (int)(toDo.sense * (this.SENSE/100.0));
 
-		//eww, fix this. add the ability to store x and y modifiers in actions so you can loop through all the affected areas
 		if(toDo.isEat()){
 			int eatAmmt;
 			int maxEatAmmt = (int)(toDo.eat * (this.EAT/100.0));

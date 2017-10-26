@@ -12,8 +12,8 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.light.DirectionalLight;
 import com.jme3.terrain.geomipmap.TerrainQuad;
 import entities.*;
-//import all robits so we end up with all the competing AIs
-import robits.*;
+import playerMinds.*;
+
 import worldData.World;
 
 
@@ -21,9 +21,9 @@ public class Paradigm extends SimpleApplication {
 	private World sim1;
 	
 	//MUST BE A POWER OF 2!!!!!!!
-	private final int stageSize = 64;
+	private final int stageSize = 256;
 	
-	private final static int STEP_TIME = 300;
+	private final static int STEP_TIME = 100;
 	
 	private static boolean simRunning = true;
 	private static boolean simOver = false;
@@ -74,12 +74,14 @@ public class Paradigm extends SimpleApplication {
 		MindTemplate[] contenders = new MindTemplate[] {
 				new ExampleGrazer(),
 				new ExampleHunter(),
-				new Destroyer()
+				new Destroyer(),
+				new TestRekr()
 		};
 		//define how many of each creature type will spawn
 		int[] populations = new int[] {
-				0,
-				0,
+				100,
+				50,
+				100,
 				1
 		};
         
@@ -102,7 +104,7 @@ public class Paradigm extends SimpleApplication {
 		
 		ObstructionHandler.updateObstructions(sim1,assetManager, obstructions, rootNode);
 		
-		ResourceHandler.updateResources(sim1, resources);
+		EnergyHandler.updateEnergys(sim1, resources);
 		
 	}
 	
@@ -122,10 +124,10 @@ public class Paradigm extends SimpleApplication {
 		robits = RobitHandler.populateRobits(sim1, assetManager, robits,rootNode);
 		
 		//create obstruction entites
-		obstructions = ObstructionHandler.populateObstructions(sim1, assetManager, obstructions, rootNode);
+		obstructions = ObstructionHandler.populateObstructions(sim1, assetManager, rootNode);
 		
 		//create resource map
-		resources = ResourceHandler.createResources(sim1, assetManager, resources, rootNode);
+		resources = EnergyHandler.createEnergys(sim1, assetManager, resources, rootNode);
 		
 		//create the sun
 		DirectionalLight sun = new DirectionalLight();

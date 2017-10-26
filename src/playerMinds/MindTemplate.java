@@ -1,6 +1,8 @@
-package robits;
+package playerMinds;
 
 import com.jme3.math.ColorRGBA;
+
+import robits.Robit;
 
 public interface MindTemplate{
    

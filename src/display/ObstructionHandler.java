@@ -13,15 +13,15 @@ import worldData.ObstructionType;
 import worldData.World;
 
 public class ObstructionHandler {
-	public static ObstructionEnt[][] populateObstructions(World sim, AssetManager assetManager, ObstructionEnt[][] obstructions, Node rootNode) {
+	public static ObstructionEnt[][] populateObstructions(World sim, AssetManager assetManager, Node rootNode) {
 		int stageSize = sim.WORLD_SIZE;
-		
+		ObstructionEnt[][] obstructions;
 		Obstruction[][] oMap = sim.getObstructionMap();
 		obstructions = new ObstructionEnt[oMap.length][];
 		for(int z = 0; z < oMap.length; z++) {
-			obstructions[z] = new ObstructionEnt[oMap[0].length];
-			for(int x = 0; x < oMap[0].length; x++) {
-				makeNew(assetManager,stageSize,oMap[z][x],obstructions[z][x],rootNode);
+			obstructions[z] = new ObstructionEnt[oMap[z].length];
+			for(int x = 0; x < oMap[z].length; x++) {
+				obstructions[z][x] = makeNew(assetManager,stageSize,oMap[z][x],obstructions[z][x],rootNode);
 			}
 		}
 		
@@ -36,11 +36,10 @@ public class ObstructionHandler {
 			for (int x = 0; x < oMap[0].length; x++) {
 				if(obstructions[z][x] != null) {
 					if(obstructions[z][x].update()) {
-						rootNode.detachChild(obstructions[z][x].getNode());
+						obstructions[z][x].detach(rootNode);
 						obstructions[z][x] = null;
 					}
 				}
-				
 				
 				//if there is a new obstruction at that location
 				if(obstructions[z][x] == null && oMap[z][x].getType() != ObstructionType.EMPTY) {
@@ -48,7 +47,7 @@ public class ObstructionHandler {
 				}
 				//there is an entitiy but the slot is empty
 				else if(obstructions[z][x] != null && oMap[z][x].isEmpty()) {
-					rootNode.detachChild(obstructions[z][x].getNode());
+					obstructions[z][x].detach(rootNode);
 					obstructions[z][x] = null;
 				}
 				//there is allready one there but its not what we have
@@ -69,10 +68,11 @@ public class ObstructionHandler {
 			Mesh selected = null;
 			
 			Node n = new Node();
-			if(od.getType() == ObstructionType.WALL) 
-				selected = new Box(.5f,1f,.5f);
+			if(od.getType() == ObstructionType.WALL) { 
+				selected = new Box(.5f,.5f,.5f);
+			}
 			else if(od.getType() == ObstructionType.PEDESTAL) 
-				selected = new Box(0.25f,0.5f,0.25f);
+				selected = new Box(0.25f,0.25f,0.25f);
 			else if(od.getType() == ObstructionType.CORPSE) 
 				selected = new Sphere(10,10,.5f);
 			else if(od.getType() == ObstructionType.PILLAR) 
@@ -87,6 +87,8 @@ public class ObstructionHandler {
 					od,
 					"Common/MatDefs/Misc/Unshaded.j3md",
 					n, stageSize);
+			oe.getGeometry().setLocalTranslation(0f,.5f,0f);
+			
 			n.setLocalTranslation(oe.getCurLocation());
 			
 			rootNode.attachChild(oe.getNode());

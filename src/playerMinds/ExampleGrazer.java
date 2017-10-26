@@ -1,11 +1,12 @@
-package robits;
+package playerMinds;
 
 import com.jme3.math.ColorRGBA;
 import java.util.Random;
 
 import action.Action;
-import worldData.SensorSuite;
-import worldData.SightTarget;
+import robits.Robit;
+import robits.SensorSuite;
+import robits.SightTargetType;
 
 public class ExampleGrazer implements MindTemplate{
    //Needed by interface
@@ -33,8 +34,8 @@ public class ExampleGrazer implements MindTemplate{
          int[] energyTouchSense = senses.getEnergyTouchSense();
          
          //ensure that our sight sense is looking for energy targets
-         if(senses.getSightTargetType() != SightTarget.ENERGY)
-            senses.setSightTargetType(SightTarget.ENERGY);
+         if(senses.getSightTargetType() != SightTargetType.ENERGY)
+            senses.setSightTargetType(SightTargetType.ENERGY);
          
          //check to see if we are allready touching some energy
          int dir = SensorSuite.findGreatest(energyTouchSense);

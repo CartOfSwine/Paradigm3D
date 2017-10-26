@@ -53,6 +53,11 @@ public abstract class BasicEntity {
 		node.setLocalTranslation(curLocation);
 	}
 	
+	public void detach(Node rootNode) {
+		this.node.detachAllChildren();
+		rootNode.detachChild(this.node);
+	}
+	
 	public Geometry getGeometry() {
 		return geometry;
 	}

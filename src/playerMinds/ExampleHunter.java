@@ -1,9 +1,10 @@
-package robits;
+package playerMinds;
 
 import com.jme3.math.ColorRGBA;
 
 import action.Action;
-import worldData.SensorSuite;
+import robits.Robit;
+import robits.SensorSuite;
 
 public class ExampleHunter implements MindTemplate{
    //Needed by interface

@@ -47,7 +47,7 @@ public class ObstructionEnt extends BasicEntity{
  	private boolean updateModel() {
 		//TODO check if we are dead, if so change to rubble model and return false isntead
  		
- 		isDestroyed = this.obstruction.getHP() >0;
+ 		isDestroyed = this.obstruction.getHP() <=0 || this.obstruction.isEmpty();
  		return isDestroyed;
 	}
 
