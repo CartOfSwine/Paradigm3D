@@ -2,6 +2,7 @@ package robits;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 import action.AOE;
@@ -278,8 +279,12 @@ public class SensorSuite{
 		lists.add(energyList);
 		lists.add(obstructionList);
 		for(LinkedList<SightTarget> list : lists) {
-			for(SightTarget t : list) 
-				t.update(senseDistance, sim);
+			Iterator<SightTarget> iter = list.iterator();
+			while(iter.hasNext()) {	
+				SightTarget t = iter.next();
+				if(t.update(senseDistance, sim)) 
+					iter.remove();
+			}
 			Collections.sort(list);
 		}
    }
