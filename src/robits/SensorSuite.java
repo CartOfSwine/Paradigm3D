@@ -1,8 +1,6 @@
 package robits;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedList;
 
 import action.AOE;
@@ -42,18 +40,14 @@ public class SensorSuite{
    creature.SesnorSuite.sightAngle will represent the angle (in degres, 0-359) to the closest target,
    creature.SesnorSuite.sightSense will be how visible that target is 
    */
-   private SightTargetType sightTargetType;      //look at the SightTarget enum. its just the thing you are looking for. (default is enemies)
+   private SightTargetType sightTargetType;   //look at the SightTarget enum. its just the thing you are looking for. (default is enemies)
    private int sightAngle;                    //the angle to the nearest (whatever you are looking for). 0 degrees is straight right, 90 up, 180 left, 270 down 
    private int sightSense;                    //how visible the target is. number from 0 to 100, affected by both distance and (when applicable) stealth stats
    private boolean sightHasTarget;            //whether or not the sight sense has found a target in it's sensory range
    
-   //TODO none of these have iterators, and you have no way of accessing them rn so we gotta finish that.
-   private LinkedList<SightTarget> enemyList;
-   private LinkedList<SightTarget> allyList;
-   private LinkedList<SightTarget> robitList;
-   private LinkedList<SightTarget> energyList;
-   private LinkedList<SightTarget> obstructionList;
-   
+   private SightTarget sightTarget;
+   private boolean nextTargetScheduled;
+   private boolean prevTargetScheduled;
    
    private final double smellDistanceModifier;
    private final int baseSensorRange;
@@ -73,12 +67,7 @@ public class SensorSuite{
       this.sightTargetType = SightTargetType.ROBIT;
       smellDistanceModifier = 0.5;
       baseSensorRange = 10;
-      
-      enemyList = new LinkedList<>();
-      allyList  = new LinkedList<>();
-      robitList  = new LinkedList<>();
-      energyList  = new LinkedList<>();
-      obstructionList  = new LinkedList<>();
+
    }
    public SensorSuite(int baseSensorRange,double smellDistanceModifier) {
 	   this.hearingSense = new int[4];
@@ -92,12 +81,6 @@ public class SensorSuite{
 	   this.sightTargetType = SightTargetType.ROBIT;
 	   this.baseSensorRange = baseSensorRange;
 	   this.smellDistanceModifier = smellDistanceModifier;
-	   
-	   enemyList = new LinkedList<>();
-	   allyList  = new LinkedList<>();
-	   robitList  = new LinkedList<>();
-	   energyList  = new LinkedList<>();
-	   obstructionList  = new LinkedList<>();
    }
    
    public SensorSuite(int[] hearingSense, int[] energySmellSense, int[] allySmellSense, int[] enemySmellSense, 
@@ -119,12 +102,16 @@ public class SensorSuite{
       
       smellDistanceModifier = 0.5;
       baseSensorRange = 10;
-      
-      enemyList = new LinkedList<>();
-      allyList  = new LinkedList<>();
-      robitList  = new LinkedList<>();
-      energyList  = new LinkedList<>();
-      obstructionList  = new LinkedList<>();
+   }
+   
+   //-----------------------------------------------------------------settings
+   public void nextSightTarget() {
+	   this.nextTargetScheduled = true;
+	   this.prevTargetScheduled = false;
+   }
+   public void prevSightTarget() {
+	   this.nextTargetScheduled = false;
+	   this.prevTargetScheduled = true;
    }
    
    //-----------------------------------------------------------------utilities
@@ -198,12 +185,26 @@ public class SensorSuite{
    public void setSightSense(int s){this.sightSense = s;}
    public void setSightTargetType(SightTargetType t){ this.sightTargetType = t;}
 
-   //-----------------------------------------------------------------Used by the World Class. dont mess with or try to call
+   
+   //====================================================================================================
+   //==================================Not for use by Players============================================
+   //====================================================================================================
+   
+   
    public void updateSenses(World sim, Robit c) {  //sorry to anyone trying to read this. needed it to run fast AF so i klueged the whole thing into the one loop set
 	   int senses,senseBuff,senseDistance,x,y,dx,dy,xVal,yVal,otherStealth,otherStealthAddition;
 		Robit[][] robitMap = sim.getRobitMap();
 		int[][] energyMap = sim.getEnergyMap();
 		Obstruction[][] obstructionMap = sim.getObstructionMap();
+		
+		this.hearingSense = new int[4];
+		this.energySmellSense = new int[4];
+		this.enemySmellSense = new int[4];
+		this.allySmellSense = new int[4];
+		this.allyTouchSense = new boolean[4];
+		this.enemyTouchSense = new boolean[4];
+		this.obstructionTouchSense = new int[4];
+		this.energyTouchSense = new int[5];
 		
 		senses = c.getSense();                          	//sense stat
 		x = sim.fc(c.getXpos());                        	//xpos of Robit
@@ -211,10 +212,26 @@ public class SensorSuite{
 		senseBuff = c.getSenseBuff();
 		senseDistance = (int)((baseSensorRange + (senses-100)/10.0)*((100+senseBuff)/100.0)) + 1;//max sensory distance
 		
+		LinkedList<SightTarget> sightList = new LinkedList<>();
+		
 		int smellMaxRange;
-
-	   for(int xv = x-senseDistance;xv <= x+senseDistance;xv++){ //loop through a box around the Robit checking each square's contents
-			for(int yv = y-senseDistance;yv <= y+senseDistance;yv++){
+		
+		//this stops the scanning from scannning the same square twice in small map sizes
+		int startX,startY, endX, endY;
+		if(senseDistance > sim.WORLD_SIZE/2) {
+			startX = x - (sim.WORLD_SIZE/2);
+			startY = y - (sim.WORLD_SIZE/2);
+			endX = x + (sim.WORLD_SIZE/2);
+			endY = y + (sim.WORLD_SIZE/2);
+		}else {
+			startX = x - senseDistance;
+			startY = y - senseDistance;
+			endX = x + senseDistance;
+			endY = y + senseDistance;
+		}
+			
+	    for(int xv = startX;xv <= endX;xv++){ //loop through a box around the Robit checking each square's contents
+			for(int yv = startY;yv <= endY;yv++){
 				xVal = sim.fc(xv);                        		//the currently scanning square cords after wrapping sides
 				yVal = sim.fc(yv); 
 				dx = x-xv;               		                //the difference in xvals
@@ -229,28 +246,40 @@ public class SensorSuite{
 					otherStealthAddition = (otherStealth-100)/10;
 					if(c.getSpecies().equals(o.getSpecies())){
 						populateSmellSenseArray(allySmellSense,smellMaxRange,dx,dy,1);
-						SightTarget t = new SightTarget(SightTargetType.ALLY,c,xVal,yVal,new GameObject(o));
-						tryAdd(allyList,t);
+						if(this.sightTargetType == SightTargetType.ALLY) {
+							SightTarget t = new SightTarget(SightTargetType.ALLY,c,xVal,yVal,new GameObject(o));
+							sightList.add(t);
+						}
 					}
 					else{                       
 						populateSmellSenseArray(enemySmellSense,smellMaxRange,dx+otherStealthAddition,dy+otherStealthAddition,1);
-						SightTarget t = new SightTarget(SightTargetType.ENEMY,c,xVal,yVal,new GameObject(o));
-						tryAdd(enemyList,t);
+						
+						if(this.sightTargetType == SightTargetType.ENEMY) {
+							SightTarget t = new SightTarget(SightTargetType.ENEMY,c,xVal,yVal,new GameObject(o));
+							sightList.add(t);
+						}
 					} 
 					populateSmellSenseArray(hearingSense,senseDistance,dx+otherStealthAddition,dy+otherStealthAddition,1);
-					SightTarget t = new SightTarget(SightTargetType.ROBIT,c,xVal,yVal,new GameObject(o));
-					tryAdd(robitList,t);
+					if(this.sightTargetType == SightTargetType.ROBIT) {
+						SightTarget t = new SightTarget(SightTargetType.ROBIT,c,xVal,yVal,new GameObject(o));
+						sightList.add(t);
+					}
 				}
 				//if there is a energy patch in the selected square
 				if(energyMap[yVal][xVal] > 0){
 					populateSmellSenseArray(energySmellSense,smellMaxRange,dx,dy,energyMap[yVal][xVal]/50.0);
-					SightTarget t = new SightTarget(SightTargetType.ENERGY,c,xVal,yVal,new GameObject(energyMap[yVal][xVal]));
-					tryAdd(energyList,t);
+					if(this.sightTargetType == SightTargetType.ENERGY) {
+						SightTarget t = new SightTarget(SightTargetType.ENERGY,c,xVal,yVal,new GameObject(energyMap[yVal][xVal]));
+						if(!sightList.contains(t) && !t.update(senseDistance, sim))
+							sightList.add(t);
+					}
 				}
 				
 				if(!obstructionMap[y][x].isEmpty()) {
-					SightTarget t = new SightTarget(SightTargetType.OBSTRUCTION,c,xVal,yVal,new GameObject(obstructionMap[yVal][xVal]));
-					tryAdd(obstructionList,t);
+					if(this.sightTargetType == SightTargetType.OBSTRUCTION) {
+						SightTarget t = new SightTarget(SightTargetType.OBSTRUCTION,c,xVal,yVal,new GameObject(obstructionMap[yVal][xVal]));
+						sightList.add(t);
+					}
 				}
 			}
 		}  
@@ -272,27 +301,63 @@ public class SensorSuite{
 				obstructionTouchSense[i] = selectO.getHP();
 		}   
 		
-		ArrayList<LinkedList<SightTarget>> lists = new ArrayList<>();
-		lists.add(enemyList);
-		lists.add(allyList);
-		lists.add(robitList);
-		lists.add(energyList);
-		lists.add(obstructionList);
-		for(LinkedList<SightTarget> list : lists) {
-			Iterator<SightTarget> iter = list.iterator();
-			while(iter.hasNext()) {	
-				SightTarget t = iter.next();
-				if(t.update(senseDistance, sim)) 
-					iter.remove();
+		if(sightList.isEmpty()) 
+			clearSight();
+		else {
+			if(sightTarget == null && !this.prevTargetScheduled && !this.nextTargetScheduled)
+				this.nextTargetScheduled = true;
+			//if they are trying to change the sight target
+			if(this.nextTargetScheduled || this.prevTargetScheduled) {
+				Collections.sort(sightList);
+				if(sightTarget == null && nextTargetScheduled)
+					populateSight(sightList.getFirst(),c,senseDistance);
+				else if(sightTarget == null && prevTargetScheduled)
+					populateSight(sightList.getLast(),c,senseDistance);
+				else if(sightTarget != null && !sightList.contains(sightTarget))
+					clearSight();
+				else if(sightTarget != null && sightList.contains(sightTarget)) 
+					refocusSight(sightList.indexOf(sightTarget),sightList, c, senseDistance);
 			}
-			Collections.sort(list);
+			nextTargetScheduled = false;
+			prevTargetScheduled = false;
+			
+			if(this.sightTarget != null && this.sightTarget.update(senseDistance, sim)) {
+				clearSight();
+			}
+			else {
+				dx = c.getXpos() - sightTarget.getXpos();
+				dy = c.getYpos() - sightTarget.getYpos();
+				System.out.println("(" + sightTarget.getXpos() + "," + sightTarget.getYpos() + ") (" + dx + "," + dy + ") " + sightTarget.getAngle());
+			}
 		}
+		
    }
-
-   private void tryAdd(LinkedList<SightTarget> list, SightTarget s) {
-	   if(!list.contains(s)){
-		   list.addLast(s);
+   
+   private void refocusSight(int startIndex, LinkedList<SightTarget> targets, Robit c, int senseDistance) {
+	   if(startIndex == 0 && this.prevTargetScheduled) 
+		   populateSight(targets.getLast(),c,senseDistance);
+	   else if(startIndex == targets.size()-1 && nextTargetScheduled) 
+		   populateSight(targets.getFirst(),c,senseDistance);
+	   else {
+		   if(nextTargetScheduled)
+			   populateSight(targets.get(startIndex+1),c,senseDistance);
+		   else if(prevTargetScheduled)
+			   populateSight(targets.get(startIndex-1),c,senseDistance);
 	   }
+   }
+   
+   private void clearSight() {
+	   this.sightHasTarget = false;
+		this.sightAngle = 0;
+		this.sightSense = 0;
+		this.sightTarget = null;
+   }
+   
+   private void populateSight(SightTarget t, Robit s, int sensorRange) {
+	   this.sightTarget = t;
+	   this.sightAngle = t.getAngle();
+	   this.sightSense = t.getActivity();
+	   this.sightHasTarget = true;
    }
    
  //-----------------------------------------------------------------checkLOS
@@ -312,47 +377,19 @@ public class SensorSuite{
 		   int xVal = sim.fc((int)x);
 		   int yVal = sim.fc((int)y);
 		   
-		   if(!sim.getObstructionMap()[yVal][xVal].getType().BLOCKS_AOE) {
-			   return false;
+		   if(sim.getObstructionMap()[yVal][xVal].getType().BLOCKS_AOE) {
+			   return true;
 		   }
 	   }
 	   
-	   return true;
+	   return false;
    }
    
- //-----------------------------------------------------------------calcAngle
- 	public static int calcAngle(int dy, int dx){
- 		//rewrite this when you have a moment. You were on a plane when you wrote this and were running
- 		//on 1.5 hrs of sleep. NEEDS POLISH. Its way too klueged rn 
-
- 		dx = dx * -1; //im not sure why i have to do this tbh. 
-
- 		if(dx == 0){
- 			if(dy > 0)
- 				return 90;
- 			if(dy < 0)
- 				return 270;
- 		}
- 		if(dy == 0 && dx < 0)
- 			return 180;
-
- 		int tempAngle = (int)Math.toDegrees(Math.atan((dy/(double)dx)));
-
- 		if(dy < 0 && dx < 0)
- 			tempAngle += 180;
- 		else if(dy > 0 && dx < 0)
- 			tempAngle = -1*tempAngle + 90;
- 		else if(dy < 0 && dx > 0)
- 			tempAngle += 360;
-
- 		return tempAngle;
- 	}
 
  	//-----------------------------------------------------------------populateSmellSenseArray
  	private void populateSmellSenseArray(int[] ara, int maxRange, int dx, int dy, double muiltiplier){
  		double d = Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
 
- 		//
  		if(Math.abs(dy) <= Math.abs(dx) && dx > 0)
  			ara[3] +=(int)(calcActivity(maxRange,d-1)*muiltiplier);
  		if(Math.abs(dy) <= Math.abs(dx) && dx < 0)
@@ -361,6 +398,11 @@ public class SensorSuite{
  			ara[0] +=(int)(calcActivity(maxRange,d-1)*muiltiplier);
  		if(Math.abs(dy) >= Math.abs(dx) && dy < 0)
  			ara[2] +=(int)(calcActivity(maxRange,d-1)*muiltiplier);
+ 		
+ 		for(int i = 0; i < ara.length; i++) {
+ 			if(ara[i] > 100) ara[i] = 100;
+ 			if(ara[i] < 0) ara[i] = 0;
+ 		}
 
  	}
 

@@ -43,14 +43,17 @@ public class SightTarget implements Comparable<SightTarget>{
 		
 		//calculate activity and angle
 		activity = SensorSuite.calcActivity(maxSenseRange, distance);
-		angle = SensorSuite.calcAngle(dy,dx);
+		angle = (int) Math.toDegrees(Math.atan2(dy,dx * -1)) - 180;
+		angle *= -1;
+		if(angle == 360) angle = 0;
+		
 		
 		return this.activity <= 0;
 	}
 	
 	@Override
 	public int compareTo(SightTarget that) {
-		return this.activity - that.activity;
+		return that.activity- this.activity; //this is backwards so it is in decending order
 	}
 	
 	@Override
@@ -61,10 +64,10 @@ public class SightTarget implements Comparable<SightTarget>{
 			return false;
 		if(o instanceof SightTarget) {
 			SightTarget that = (SightTarget)o;
-
-			return this.target.equals(that.target);	
+			if(this.targetType == SightTargetType.ENERGY && that.targetType == SightTargetType.ENERGY)
+				return this.xPos == that.xPos && this.yPos == that.yPos;
+			return this == that;
 		}
-		
 		return false;
 	}
 	
@@ -76,11 +79,11 @@ public class SightTarget implements Comparable<SightTarget>{
 		return targetType;
 	}
 
-	public int getxPos() {
+	public int getXpos() {
 		return xPos;
 	}
 
-	public int getyPos() {
+	public int getYpos() {
 		return yPos;
 	}
 
