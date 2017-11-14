@@ -1,6 +1,6 @@
 package playerMinds;
 
-import com.jme3.math.ColorRGBA;
+import java.awt.Color;
 
 import action.Action;
 import robits.Robit;
@@ -10,7 +10,6 @@ import robits.SightTargetType;
 public class SightTest implements MindTemplate{
 
    private Robit robit;
-   private ColorRGBA color = ColorRGBA.Pink;
    
    private int[] stats= {
 		   100,		//MAX_HEALTH
@@ -34,15 +33,18 @@ public class SightTest implements MindTemplate{
        
        if(hasTarget) {
     	   double angle = s.getSightAngle();
-    	   int newAngle = (int) Math.floor(angle / 360.0 * 4.0);
+    	   int newAngle = (int) Math.round(angle / 360.0 * 4.0);
+    	   if(newAngle > 3) newAngle -= 3;
     	   tryMove(newAngle,angle,s);
     	   
        }
          
+       this.robit.setColor(Color.CYAN);
    }
    
    private void tryMove(int dir, double angle, SensorSuite s) {
 	   int prefDir = dir;
+	   //System.out.println("Target at " + angle + " with dir of " + dir);
 	   if (angle / 360.0 * 4.0 > dir) {
 		   prefDir = dir + 1;
 	   }
@@ -61,14 +63,12 @@ public class SightTest implements MindTemplate{
 		   this.robit.addAction(Action.getAttackAction(dir));
 	   
    }
-
-   public ColorRGBA getColor(){
-	   return color;
-   }
-   
    
    //Dont change these
    public int[] getStats(){return this.stats;}
    public String getSpecies(){return this.species;}
    public void setRobit(Robit me){if(this.robit == null) this.robit = me;}
+   public boolean isAlly(String speciesName) {
+	   return this.species.equals(speciesName);
+   }
 }

@@ -1,16 +1,17 @@
 package robits;
 
-import com.jme3.math.ColorRGBA;
+import java.awt.Color;
 import java.util.LinkedList;
 //import java.util.concurrent.*;
 
 import action.Action;
 import action.CordModifier;
 import playerMinds.MindTemplate;
+import replay.RobitPlaceholder;
 import worldData.World;
 
 public class Robit{
-	private String SECURE_KEY = "password";   //wont run unless this matched the one in mainFrm
+	private final String SECURE_KEY;
 	//prevents any instances of the Mind class from changing key parts of the creature
 
 	private int xPos;
@@ -31,45 +32,64 @@ public class Robit{
 	private final int SPEED;      	//reduces costs of movement
 	private final int EAT;        	//increases energy gained from eating
 	private final int SENSE;      	//increases the creature's sensory distance
-									//maximum sensory distance = 7 + (senses-100)/10
-									//sensory activity is determined with either
-									//A = -(D-S)^3 * 100/(S^3) or
-									//A = -D*(100/S)+100  depending on whether sensor type is set to linear or nonlinear (Allways linear in current version)
-									//A = activity (0-100 min/max)
-									//D = distance = sqrt(dY^2 + dX^2)         (+(stealth-100)/10 depending on the stat) 
-									//S = maximum sensor distance
+	//maximum sensory distance = 7 + (senses-100)/10
+	//sensory activity is determined with either
+	//A = -(D-S)^3 * 100/(S^3) or
+	//A = -D*(100/S)+100  depending on whether sensor type is set to linear or nonlinear (Allways linear in current version)
+	//A = activity (0-100 min/max)
+	//D = distance = sqrt(dY^2 + dX^2)         (+(stealth-100)/10 depending on the stat) 
+	//S = maximum sensor distance
 	private final int STEALTH;    	//passive stat, determines how easy the creature is to hear/smell to other creatures
 
 	private int qRawIncomingDmg;  	//the ammount of queued incoming damage to be applied in the resolution phase
+	private int qAttackBuff;		//the percentage based damage beff appplied this tick
 	private int qDefenceBuff;     	//the percentage based damage reduction buff applied this tick
 	private int qSenseBuff;       	//the percentage based sensory range buff applied this tick
 	private int qXchange;         	//the queued change in the creature's x cordinate
 	private int qYchange;         	//the queued change in the creature's y cordinate
 	@SuppressWarnings("unused")
 	private int qEnergyChange;    	//the ammoun of energy the creatue has eaten this phanse, applied at resolution
+	private Action lastActionTaken;	//the last action the creature preformed
 
-	
 	private World myWorld;        	//referance to the world the creature inhabits
 	private int worldSize;
-	
+
 	private LinkedList<Action> actionQueue;
 
+	private Color color;
+	
 	private String id;          	 //Any type of unique identifier for the creature
 
 	private MindTemplate mind;       //the reference to the player-made mind object the creature uses for decision making
-	
+
 	private SensorSuite sensorSuite;
 
 
 	//=============================================================================Constructors
-	@SuppressWarnings("static-access")
-	public Robit(MindTemplate mind, World myWorld, String id, int xPos, int yPos){
+	public Robit(RobitPlaceholder p,  int worldSize, String key) {
+		this.MAX_HEALTH = p.getMaxHealth();
+		this.MAX_ENERGY = p.getMaxEnergy();
+		this.ATTACK = p.getAttack();
+		this.DEFENCE = p.getDefence();
+		this.SPEED = p.getSpeed();
+		this.EAT = p.getEat();
+		this.SENSE = p.getSense();
+		this.STEALTH = p.getStealth();
+		this.species = p.getSpecies();
+		this.SECURE_KEY = key;
+		this.color = Color.GRAY;
+		this.worldSize = worldSize;
+	}
+	
+	public Robit(MindTemplate mind, World myWorld, String id, int xPos, int yPos, String key){
 		this.mind = mind;
 		this.myWorld = myWorld;
 		this.worldSize = myWorld.WORLD_SIZE;
 
+		this.color = Color.GRAY;
+		
 		if (mind.getSpecies() == null)
-			this.species = mind.species; //get the species value from the interface if they havent provided one
+			this.species = MindTemplate.species; //get the species value from the interface if they havent provided one
 		else
 			this.species = mind.getSpecies(); 
 
@@ -99,6 +119,7 @@ public class Robit{
 
 		this.isDead = false;
 		
+		this.SECURE_KEY = key;
 	}
 
 	//=============================================================================Utilities
@@ -160,12 +181,13 @@ public class Robit{
 		}
 		if(toDo.isAttack()){
 			for(CordModifier cm : toDo.aoe.locations){
-				boolean didDamage = this.myWorld.damageSquare(this.xPos + cm.xMod, this.yPos + cm.yMod, (int)(toDo.attack * (this.ATTACK/100.0)),SECURE_KEY);
+				boolean didDamage = this.myWorld.damageSquare(this.xPos + cm.xMod, this.yPos + cm.yMod, (int)(toDo.attack * (this.ATTACK/100.0) * ((100 + this.qAttackBuff)/100.0)),SECURE_KEY);
 				if(didDamage && toDo.singleTarget)
 					continue;
 			}
 		}
 
+		this.lastActionTaken = toDo;
 		return this.actionQueue.isEmpty();
 	}
 
@@ -228,29 +250,39 @@ public class Robit{
 		this.qRawIncomingDmg += ammt; 
 	}
 	//=============================================================================Gets/Sets
-	public ColorRGBA getGlowColor()    {return this.mind.getColor();} //lets you change colors...
-	public ColorRGBA getColor() {return this.mind.getColor();}
+	public Color getColor() {return this.color;}
+
+	public void setColor(Color c) {
+		this.color = c;
+	}
 	
-	public int getHealth()     {return this.health;}
-	public int getMaxHealth()  {return this.MAX_HEALTH;}
-	public int getStealth()    {return this.STEALTH;} 
-	public int getSense()      {return this.SENSE;}
-	public int getSenseBuff()  {return this.qSenseBuff;}
-	public int getEnergy()     {return this.energy;}
-	public int getMaxEnergy()  {return this.MAX_ENERGY;}
-	public int getDefence()    {return this.DEFENCE;}
+	public int getHealth()     	{return this.health;}
+	public int getMaxHealth()  	{return this.MAX_HEALTH;}
+	public int getAttack()		{return this.ATTACK;}
+	public int getSpeed()		{return this.SPEED;}
+	public int getEat()			{return this.EAT;}
+	public int getStealth()    	{return this.STEALTH;} 
+	public int getSense()      	{return this.SENSE;}
+	public int getDefenceBuff()	{return this.qDefenceBuff;}
+	public int getAttackBuff()	{return this.qAttackBuff;}
+	public int getSenseBuff()  	{return this.qSenseBuff;}
+	public int getEnergy()     	{return this.energy;}
+	public int getMaxEnergy()  	{return this.MAX_ENERGY;}
+	public int getDefence()    	{return this.DEFENCE;}
+	public int getWorldSize()	{return this.worldSize;}
+	
+	public int getXpos()       	{return this.xPos;}
+	public int getYpos()       	{return this.yPos;}  
 
-	public int getXpos()       {return this.xPos;}
-	public int getYpos()       {return this.yPos;}  
+	public String getId()      	{return this.id;}
 
-	public String getId()      {return this.id;}
+	public boolean getIsDead() 	{return this.isDead;}
 
-	public boolean getIsDead() {return this.isDead;}
+	public Action getLastAction() {return this.lastActionTaken;}
 
-	public void setIsDead(boolean state,String key) throws CheaterException {
+	public void setIsDead(boolean state,String key) {
 		if(!key.equals(this.SECURE_KEY))
-			throw new CheaterException();
-		this.isDead = state;
+			this.isDead = state;	
 	}
 
 	public SensorSuite getSensorSuite(){return this.sensorSuite;} 
@@ -275,10 +307,49 @@ public class Robit{
 
 		this.myWorld = world;
 	}
-	public int getWorldSize() {
-		return this.worldSize;
+
+	public boolean isAlly(String speciedName) {
+		return this.mind.isAlly(speciedName);
 	}
+	
 
-
+	public LinkedList<Action> getActionQueue() {
+		return actionQueue;
+	}
+	
+	public void setEnergy(int e, String psk) {
+		if(psk.equals(this.SECURE_KEY))
+			this.energy = e;
+	}
+	
+	public void setAttackBuff(int buff, String psk) {
+		if(psk.equals(this.SECURE_KEY))
+			this.qAttackBuff = buff;
+	}
+	
+	public void setDefenceBuff(int buff,String psk) {
+		if(psk.equals(this.SECURE_KEY))
+			this.qDefenceBuff = buff;
+	}
+	
+	public void setSenseBuff(int buff, String psk) {
+		if(psk.equals(this.SECURE_KEY))
+			this.qSenseBuff = buff;
+	}
+	
+	public void setLastAction(Action a, String psk) {
+		if(psk.equals(this.SECURE_KEY))
+			this.lastActionTaken = a;
+	}
+	
+	public void setXpos(int pos, String psk) {
+		if(psk.equals(this.SECURE_KEY))
+			this.xPos = pos;
+	}
+	
+	public void setYpos(int pos, String psk) {
+		if(psk.equals(this.SECURE_KEY))
+			this.yPos = pos;
+	}
 }
 

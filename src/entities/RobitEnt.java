@@ -9,6 +9,7 @@ import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Sphere;
 
+import display.ColorConverter;
 import robits.Robit;
 
 //doesnt extend Robit. This is because the worldData is made to be independant of the display data. This class will
@@ -45,8 +46,12 @@ public class RobitEnt extends BasicEntity{
 		
 		Geometry g = new Geometry("creatureModel",m);
 		Material t = new Material(a, TEXTURE_LOCAITON);
-		t.setColor("Color", robit.getColor());
-		t.setColor("GlowColor", robit.getGlowColor());
+		
+		ColorRGBA c = ColorConverter.convertToColorRGBA(robit.getColor());
+		t.setColor("Color", c);
+		//c = ColorConverter.convertToColorRGBA(robit.getGlowColor());
+		t.setColor("GlowColor", c);
+		
 		g.setMaterial(t);
 	
 		this.material = t;
@@ -68,14 +73,15 @@ public class RobitEnt extends BasicEntity{
 	}
 	
 	private void updateModel() {
-		if(this.robitIsDead)
+		//if(this.robitIsDead)
 		
 		if(this.robit.getIsDead()) {
 			this.material.setColor("GlowColor",ColorRGBA.Black);
 			this.material.setColor("Color",ColorRGBA.Gray);
 		}
 		else {
-			this.material.setColor("GlowColor",robit.getGlowColor());
+			ColorRGBA c = ColorConverter.convertToColorRGBA(robit.getColor());
+			this.material.setColor("Color",c);
 		}
 	}
 	
@@ -95,7 +101,7 @@ public class RobitEnt extends BasicEntity{
 				nextLocation.setY(.5f);
 			
 			startMoveTime = System.currentTimeMillis();
-			endMoveTime = System.currentTimeMillis() + maxAnimTime;
+			endMoveTime = startMoveTime + maxAnimTime;
 		}
 		else if (curLocation.getX() == (float)robit.getXpos() && 
 				curLocation.getY() == nextLocation.getY() && 
@@ -105,9 +111,9 @@ public class RobitEnt extends BasicEntity{
 			lastLocation.set(nextLocation);
 		}
 		
-		if(isMoving) {
+		if(isMoving)
 			scaleMove(startMoveTime, endMoveTime,lastLocation,nextLocation);
-		}
+		
 	}
 	
 	public boolean getIsDead() {

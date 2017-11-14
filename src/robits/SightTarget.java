@@ -43,7 +43,7 @@ public class SightTarget implements Comparable<SightTarget>{
 		
 		//calculate activity and angle
 		activity = SensorSuite.calcActivity(maxSenseRange, distance);
-		angle = (int) Math.toDegrees(Math.atan2(dy,dx * -1)) - 180;
+		angle = (int) Math.toDegrees(Math.atan2(dx,dy * -1)) - 180;
 		angle *= -1;
 		if(angle == 360) angle = 0;
 		

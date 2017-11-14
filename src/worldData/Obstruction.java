@@ -7,10 +7,7 @@ public class Obstruction implements Cloneable{
 	private int yPos;
 	
 	public Obstruction(int x, int y){
-		this.type = ObstructionType.EMPTY;
-		this.curHP = this.type.MAXHP;
-		this.xPos = x;
-		this.yPos = y;
+		this(ObstructionType.EMPTY,x,y);
 	}
 
 	public Obstruction(ObstructionType type,int x, int y){
@@ -18,6 +15,11 @@ public class Obstruction implements Cloneable{
 		this.curHP = type.MAXHP;
 		this.xPos = x;
 		this.yPos = y;
+	}
+	
+	public Obstruction(ObstructionType type, int x, int y, int hp) {
+		this(type,x,y);
+		this.curHP = hp;
 	}
 	
 	public Obstruction(Obstruction that) {

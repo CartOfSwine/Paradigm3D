@@ -1,7 +1,5 @@
 package playerMinds;
 
-import com.jme3.math.ColorRGBA;
-
 import robits.Robit;
 
 public interface MindTemplate{
@@ -19,15 +17,12 @@ public interface MindTemplate{
    //this is an array of the Robit's stats. 8 elements, values of 0-200 each, must add up to 800 (or lower i guess)
    //override it in your MindTemplate implementation to specify it for your Robit
    public int[] stats = {100,100,100,100,100,100,100,100};
-    
-   //this is the color your Robit will have on the map. Override to change
-   public ColorRGBA color = ColorRGBA.Gray;
    
    //Each Robit will have this method called once each per game tick. Put all your code in here
    //nonblocking code only for obvious reasons.
    public void tick();
-   
-   public ColorRGBA getColor();
+
    public int[] getStats();
    public String getSpecies();
+   public boolean isAlly(String speciesName);
 }

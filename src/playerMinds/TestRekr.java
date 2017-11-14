@@ -1,6 +1,6 @@
 package playerMinds;
 
-import com.jme3.math.ColorRGBA;
+import java.awt.Color;
 
 import action.Action;
 import robits.Robit;
@@ -17,6 +17,8 @@ public class TestRekr implements MindTemplate {
 
 	@Override
 	public void tick() {
+		this.robit.setColor(Color.YELLOW);
+		
 		int dir = 0;
 		if(age%20 == 0)dir = 1;
 		
@@ -38,11 +40,6 @@ public class TestRekr implements MindTemplate {
 	public void setRobit(Robit me) {
 		this.robit = me;
 	}
-	
-	@Override
-	public ColorRGBA getColor() {
-		return ColorRGBA.Cyan;
-	}
 
 	@Override
 	public int[] getStats() {
@@ -53,5 +50,10 @@ public class TestRekr implements MindTemplate {
 	public String getSpecies() {
 		return this.species;
 	}
+	
+	@Override
+	public boolean isAlly(String speciesName) {
+		   return this.species.equals(speciesName);
+	   }
 
 }

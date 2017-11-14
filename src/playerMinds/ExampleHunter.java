@@ -1,7 +1,6 @@
 package playerMinds;
 
-import com.jme3.math.ColorRGBA;
-
+import java.awt.Color;
 import action.Action;
 import robits.Robit;
 import robits.SensorSuite;
@@ -9,7 +8,7 @@ import robits.SensorSuite;
 public class ExampleHunter implements MindTemplate{
    //Needed by interface
    private Robit robit;
-   private ColorRGBA color = ColorRGBA.Red;
+   private Color color = Color.RED;
    
    //{MAX_HEALTH, MAX_ENERGY, ATTACK, DEFENCE, SPEED, EAT, SENSE, STEALTH}
    private int[] stats= {100,100,100,100,100,100,100,100};
@@ -37,11 +36,11 @@ public class ExampleHunter implements MindTemplate{
             this.robit.addAction(toDo);  
             this.robit.addAction(toDo);
             this.robit.addAction(toDo);
-            this.color = ColorRGBA.Yellow;
+            this.robit.setColor(Color.YELLOW);
             return;
          }
          
-         this.color = ColorRGBA.Red;
+         this.robit.setColor(Color.RED);
          
          //no robits adjacent. lets see if there are any big lumps of energy lying around
          dir = SensorSuite.findGreatest(energyTouchSense);
@@ -69,8 +68,11 @@ public class ExampleHunter implements MindTemplate{
             this.robit.addAction(Action.getMoveAction(dir));
    }
 
-   public ColorRGBA getColor(){return this.color;}
+   public Color getColor(){return this.color;}
    public int[] getStats(){return this.stats;}
    public String getSpecies(){return this.species;}
    public void setRobit(Robit me){if(this.robit == null) this.robit = me;}
+   public boolean isAlly(String speciesName) {
+	   return this.species.equals(speciesName);
+   }
 }

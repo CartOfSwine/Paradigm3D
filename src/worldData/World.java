@@ -1,15 +1,19 @@
 package worldData;
 
-import com.jme3.math.ColorRGBA;
-
 import playerMinds.MindTemplate;
+import replay.EnergyDelta;
+import replay.ObstructionDelta;
+import replay.RobitPlaceholder;
+import replay.SimulationRecord;
 
+import java.util.LinkedList;
 import java.util.Random;
 
 import robits.CheaterException;
 import robits.Robit;
 import worldData.Obstruction;
 
+import java.awt.Color;
 import java.lang.Math;
 
 public class World  {
@@ -20,10 +24,10 @@ public class World  {
 	//holds a single instantiation of each player's mind
 	private MindTemplate[] contenders;
 
-	private String SECURE_KEY = "password";
+	private final String SECURE_KEY;
 
 	//Super important note: Coordinates 0,0 is in the UPPER left hand corner of the map. Y values increase as you go down (for the sake of arrays and a few other things)
-	private Robit[][] RobitMap;
+	private Robit[][] robitMap;
 	private int[][] energyMap;
 	private Obstruction[][] obstructionMap;
 
@@ -34,24 +38,75 @@ public class World  {
 	public final int baseSensorRange = 10;
 	public final boolean linearActivation = true;
 	public final double smellDistanceModifier = 0.5;
-	//=============================================================================Constructors
-	public World(int size, int numWalls, MindTemplate[] contenders) {
-		this.contenders = contenders;
+	
+	LinkedList<EnergyDelta> energyChanges;
+	LinkedList<ObstructionDelta> obstructionChanges;
 
+	private final boolean usingRecord;
+	private SimulationRecord record;
+	
+	//=============================================================================Constructors
+	public World(SimulationRecord record) {
+		this.usingRecord = true;
+		
+		this.record = record;
+		
+		this.SECURE_KEY = record.getKey();
+		this.WORLD_SIZE = record.getWorldSize();
+		
+		Obstruction[][]rObstructions = record.getStartingObstrucitons();
+		int[][] rEnergy = record.getStartingEnergy();
+		RobitPlaceholder[][] rRobits = record.getPopulation();
+		
+		this.robitMap = new Robit[this.WORLD_SIZE][this.WORLD_SIZE];
+		this.energyMap = new int[this.WORLD_SIZE][this.WORLD_SIZE];
+		this.obstructionMap = new Obstruction[this.WORLD_SIZE][this.WORLD_SIZE];
+		
+		//deep copy over from starting configuration
+		for(int y = 0; y < rEnergy.length; y++) {
+			for(int x = 0; x < rEnergy[0].length; x++) {
+				this.obstructionMap[y][x] = new Obstruction(rObstructions[y][x]);
+				this.energyMap[y][x] = rEnergy[y][x];
+			}
+		}
+		
+		//deep copy over robits
+		this.population = new Robit[rRobits.length][];
+		for(int s = 0; s < rRobits.length; s++) {
+			this.population[s] = new Robit[rRobits[s].length];
+			for(int m = 0; m < rRobits[s].length;m++) {
+				this.population[s][m] = new Robit(rRobits[s][m],this.WORLD_SIZE, this.SECURE_KEY);
+				Robit r = this.population[s][m];
+				this.robitMap[r.getYpos()][r.getXpos()] = r;
+			}
+			
+		}
+		
+		this.record.setRecordingMode(false);
+		this.record.attachWorld(this);
+	}
+	
+	public World(int size, int numWalls, MindTemplate[] contenders, String key) {
+		this.contenders = contenders;
+		this.usingRecord = false;
 		WORLD_SIZE = size;
-		RobitMap = new Robit[WORLD_SIZE][WORLD_SIZE];
+		robitMap = new Robit[WORLD_SIZE][WORLD_SIZE];
 		obstructionMap = new Obstruction[WORLD_SIZE][WORLD_SIZE];
 		energyMap = new int[WORLD_SIZE][WORLD_SIZE];  
 
 		for (int y = 0; y < WORLD_SIZE; y++){
 			for (int x = 0; x < WORLD_SIZE; x++){
-				RobitMap[y][x] = null;
+				robitMap[y][x] = null;
 				energyMap[y][x] = 0;
 				obstructionMap[y][x] = new Obstruction(x,y);
 			}
 		}
 		this.nextTickFlag = true;
-
+		this.SECURE_KEY = key;
+		
+		this.energyChanges = new LinkedList<>();
+		this.obstructionChanges = new LinkedList<>();
+		
 		placeWalls(numWalls);
 		placeEnergys();
 	}
@@ -94,17 +149,15 @@ public class World  {
 					rndX = rnd.nextInt(WORLD_SIZE);
 					rndY = rnd.nextInt(WORLD_SIZE);
 				}
-				while(RobitMap[rndY][rndX] != null || !obstructionMap[rndY][rndX].isEmpty());
+				while(robitMap[rndY][rndX] != null || !obstructionMap[rndY][rndX].isEmpty());
 
-				population[i][j] = new Robit((MindTemplate)minds[i][j], this,((Integer)i).toString(),rndX,rndY);
-				RobitMap[rndY][rndX] = population[i][j];
+				population[i][j] = new Robit((MindTemplate)minds[i][j], this,((Integer)i).toString(),rndX,rndY, this.SECURE_KEY);
+				robitMap[rndY][rndX] = population[i][j];
 				minds[i][j].setRobit(population[i][j]);
 
 			}
-			
-			
 		}
-
+		this.record = new SimulationRecord(this,this.SECURE_KEY);
 	}
 	//=============================================================================Utilities
 	//-----------------------------------------------------------------placeWalls
@@ -193,46 +246,59 @@ public class World  {
 	}
 	//-----------------------------------------------------------------tick
 	public void tick(){
+		boolean recordNewTick = false;
+		
 		//exicutes mind code if all queued actions are complete
-
-		if(nextTickFlag){       
-			for (int i = 0; i < population.length;i++) {
-				for (Robit robit: population[i]){
-					feedSensorData(robit);
-					robit.tick();
+		if(usingRecord)
+			this.record.next();
+		else {
+			if(nextTickFlag){       
+				for (int i = 0; i < population.length;i++) {
+					for (Robit robit: population[i]){
+						feedSensorData(robit);
+						robit.tick();
+					}
 				}
+				recordNewTick = true;
 			}
-		}
-		try{
-			//will queue up the effects of actions one at a time
-			this.nextTickFlag = true;
-			for (int i = 0; i < population.length; i++) {
-				for (Robit robit: population[i]){
-					if (robit.nextAction(SECURE_KEY) != true)
-						this.nextTickFlag = false;
+			try{
+				//will queue up the effects of actions one at a time
+				this.nextTickFlag = true;
+				for (int i = 0; i < population.length; i++) {
+					for (Robit robit: population[i]){
+						if (robit.nextAction(SECURE_KEY) != true)
+							this.nextTickFlag = false;
+					}
 				}
-			}
-			//will resolve all queued effects on Robits
-			for (int i = 0; i < population.length; i++) {
-				for (Robit robit: population[i]){
-					robit.resolve(SECURE_KEY);
+				//will resolve all queued effects on Robits
+				for (int i = 0; i < population.length; i++) {
+					for (Robit robit: population[i]){
+						robit.resolve(SECURE_KEY);
+					}
 				}
+	
 			}
-
+			catch(CheaterException e){}
+			
+			if(recordNewTick)
+				this.record.recordTick();
+			else
+				this.record.recordState();
+			
+			this.energyChanges.clear();
+			this.obstructionChanges.clear();
 		}
-		catch(CheaterException e){
-			System.out.println("Somehow my own code is cheating...?");
-		}
+		
 
 	}
 	//-----------------------------------------------------------------killRobitAt
 	public void killRobit(int xPos, int yPos){
 		int x = fc(xPos);
 		int y = fc(yPos);
-		Robit toKill = RobitMap[y][x];
+		Robit toKill = robitMap[y][x];
 
-		if(RobitMap[y][x] != null){
-			RobitMap[y][x] = null;
+		if(robitMap[y][x] != null){
+			robitMap[y][x] = null;
 			energyMap[y][x] += toKill.getMaxEnergy()/2;
 			energyMap[y][x] += toKill.getDefence()/2;
 			obstructionMap[y][x] = new Obstruction(ObstructionType.CORPSE,x,y);
@@ -250,12 +316,12 @@ public class World  {
 		endX = fc(sX+changeX);
 		endY = fc(sY+changeY);
 
-		if(RobitMap[startY][startX] != null && 
-				RobitMap[endY][endX] == null && 
+		if(robitMap[startY][startX] != null && 
+				robitMap[endY][endX] == null && 
 				obstructionMap[endY][endX].isEmpty()){
 
-			RobitMap[endY][endX] = RobitMap[startY][startX];
-			RobitMap[startY][startX] = null;
+			robitMap[endY][endX] = robitMap[startY][startX];
+			robitMap[startY][startX] = null;
 			return true;
 		}
 		return false;
@@ -267,7 +333,7 @@ public class World  {
 			throw new CheaterException();
 
 		//no need to precheck the cordinates as they are rectified
-		return (RobitMap[fc(y)][fc(x)] == null && obstructionMap[fc(y)][fc(x)].isEmpty());
+		return (robitMap[fc(y)][fc(x)] == null && obstructionMap[fc(y)][fc(x)].isEmpty());
 	}
 
 	//-----------------------------------------------------------------fc
@@ -286,11 +352,17 @@ public class World  {
 		int x = fc(xVal);
 		int y = fc(yVal);
 
+		int startAmmt = energyMap[y][x];
+		
 		int ammt = energyMap[y][x];
 		if (ammt > maxAmmt)
 			ammt = maxAmmt;
 
 		energyMap[y][x] -= ammt;
+		
+		if(ammt != 0) 
+			this.energyChanges.add(new EnergyDelta(x, y, startAmmt,energyMap[y][x]));
+		
 		return ammt;
 	}
 
@@ -302,12 +374,29 @@ public class World  {
 		int x = fc(xVal);
 		int y = fc(yVal);
 
-		if(RobitMap[y][x] != null){
-			RobitMap[y][x].incIncomingDmg(atk,SECURE_KEY);
+		if(robitMap[y][x] != null){
+			robitMap[y][x].incIncomingDmg(atk,SECURE_KEY);
 			return true;
 		} 
 		else if (!obstructionMap[y][x].isEmpty()) {
-			return obstructionMap[y][x].damage(atk);
+			ObstructionType beforeType = obstructionMap[y][x].getType();
+			int beforeHP = obstructionMap[y][x].getHP();
+			if(obstructionMap[y][x].damage(atk)) {
+				this.obstructionChanges.add(new ObstructionDelta(
+						x, y,
+						beforeType, 
+						obstructionMap[y][x].getType(), 
+						beforeHP, 
+						obstructionMap[y][x].getHP()));
+				return true;
+			}
+			else
+				this.obstructionChanges.add(new ObstructionDelta(
+						x, y,
+						beforeType, 
+						obstructionMap[y][x].getType(), 
+						beforeHP, 
+						obstructionMap[y][x].getHP()));
 		}
 		return false;       
 	}
@@ -318,34 +407,45 @@ public class World  {
 	}
 
 	//=============================================================================Gets/Sets
-	public ColorRGBA getColor(int xVal, int yVal){
+	public Color getColor(int xVal, int yVal){
 		int x = fc(xVal);
 		int y = fc(yVal);
 
-		if (RobitMap[y][x] != null)
-			return RobitMap[y][x].getColor();
+		if (robitMap[y][x] != null)
+			return robitMap[y][x].getColor();
 		if (!obstructionMap[y][x].isEmpty())
 			return obstructionMap[y][x].getType().COLOR;
 		if (energyMap[y][x] != 0){
 			float v = energyMap[y][x]/50;
 			if(v > .9) v = 0.9f;
-			return new ColorRGBA(0f,1-v,1-v,1);
+			return new Color(0f,1-v,1-v,1);
 		}
 		return obstructionMap[y][x].getType().COLOR;
 	}   
 
-
+	public LinkedList<EnergyDelta> getEnergyChanges(){
+		return this.energyChanges;
+	}
+	
+	public LinkedList<ObstructionDelta> getObstrucitonChanges(){
+		return this.obstructionChanges;
+	}
+	
 	public Robit[][] getPopulation() {
 		return this.population;
 	}
 	public Robit[][] getRobitMap(){
-		return this.RobitMap;
+		return this.robitMap;
 	}
 	public int[][] getEnergyMap(){
 		return this.energyMap;
 	}
 	public Obstruction[][] getObstructionMap(){
 		return this.obstructionMap;
+	}
+	
+	public SimulationRecord getSimulationRecord() {
+		return this.record;
 	}
 }
 

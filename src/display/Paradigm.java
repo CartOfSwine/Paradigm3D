@@ -13,7 +13,7 @@ import com.jme3.light.DirectionalLight;
 import com.jme3.terrain.geomipmap.TerrainQuad;
 import entities.*;
 import playerMinds.*;
-
+import replay.SimulationRecord;
 import worldData.World;
 
 
@@ -21,7 +21,7 @@ public class Paradigm extends SimpleApplication {
 	private World sim1;
 	
 	//MUST BE A POWER OF 2!!!!!!!
-	private final int stageSize = 16;
+	private final static int stageSize = 64;
 	
 	private final static int STEP_TIME = 200;
 	
@@ -41,14 +41,32 @@ public class Paradigm extends SimpleApplication {
 
 	
 	public static void main(String args[]) {
+		MindTemplate[] contenders = new MindTemplate[] {
+				new ExampleGrazer(),
+				new ExampleHunter(),
+				new Destroyer(),
+				new SightTest(),
+				new TestRekr()
+		};
+		//define how many of each creature type will spawn
+		int[] populations = new int[] {
+				0,
+				0,
+				0,
+				0,
+				1
+		};
+		
+		World preRecord = new World(stageSize,0,contenders, "Password");
+		preRecord.initialize(populations);
+		for(int i = 0; i < 200;i++) {
+			preRecord.tick();
+		}
 		
 		
 		
-		Paradigm app = new Paradigm();
+		Paradigm app = new Paradigm(preRecord.getSimulationRecord());
         app.start(); // start the game
-        
-        //TODO refer to this from a nonstatic context
-        //TODO make STEP_TIME a nonstatic member of paradigm and set it in the constructor
         
         try {
 			Thread.sleep(2000); //give graphics a chance to get ready
@@ -69,6 +87,11 @@ public class Paradigm extends SimpleApplication {
         }
 	}
 	
+	public Paradigm(SimulationRecord r) {
+		sim1 = new World(r);
+	}
+	
+	
 	public Paradigm() {
 		//set up two mind objects for the opposing players
 		MindTemplate[] contenders = new MindTemplate[] {
@@ -79,14 +102,14 @@ public class Paradigm extends SimpleApplication {
 		};
 		//define how many of each creature type will spawn
 		int[] populations = new int[] {
+				1,
 				0,
-				0,
-				0,
-				1
+				1,
+				0
 		};
         
         //create the simulation with the players
-	    sim1 = new World(this.stageSize,0,contenders);
+	    sim1 = new World(stageSize,0,contenders, "Password");
 	    //initialize the sim with 10 creatures for each player
 	    sim1.initialize(populations);
 	    
@@ -145,6 +168,7 @@ public class Paradigm extends SimpleApplication {
         LightScatteringFilter filter = new LightScatteringFilter(lightPos);
         fpp.addFilter(filter);
         viewPort.addProcessor(fpp);
+        
         
         
         //rig up everything

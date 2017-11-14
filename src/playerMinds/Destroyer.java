@@ -1,8 +1,7 @@
 package playerMinds;
 
+import java.awt.Color;
 import java.util.Random;
-
-import com.jme3.math.ColorRGBA;
 
 import action.Action;
 import robits.Robit;
@@ -12,7 +11,7 @@ import robits.SensorSuite;
 public class Destroyer implements MindTemplate{
    //Needed by interface
    private Robit robit;
-   private ColorRGBA color = ColorRGBA.Green;
+   private Color color = Color.GREEN;
    
    //private int oldness;
    
@@ -21,7 +20,6 @@ public class Destroyer implements MindTemplate{
    private final String species = "Destroyer"; 
    
    public Destroyer(){
-	  //oldness = 0;
    }
    
    public void tick(){
@@ -33,6 +31,8 @@ public class Destroyer implements MindTemplate{
          int[] energySmellSense = senses.getEnergySmellSense();
          int[] obstructionTouchSense = senses.getObstructionTouchSense();
          //int[] enemySmellSense = senses.getEnemySmellSense();
+         
+         this.robit.setColor(Color.GREEN);
          
          int attkDir = SensorSuite.findFirst(enemyTouchSense);
          if (attkDir == -1) {
@@ -73,11 +73,14 @@ public class Destroyer implements MindTemplate{
          
    }
 
-   public ColorRGBA getColor(){
+   public Color getColor(){
 	   return color;
 	   
    }
    public int[] getStats(){return this.stats;}
    public String getSpecies(){return this.species;}
    public void setRobit(Robit me){if(this.robit == null) this.robit = me;}
+   public boolean isAlly(String speciesName) {
+	   return this.species.equals(speciesName);
+   }
 }

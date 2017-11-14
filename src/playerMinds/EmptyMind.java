@@ -1,13 +1,12 @@
 package playerMinds;
 
-import com.jme3.math.ColorRGBA;
-
+import java.awt.Color;
 import robits.Robit;
 
 public class EmptyMind implements MindTemplate{
 
    private Robit robit;
-   private ColorRGBA color = ColorRGBA.Green;
+   private Color color = Color.GRAY;
    
    private int[] stats= {
 		   100,		//MAX_HEALTH
@@ -29,7 +28,7 @@ public class EmptyMind implements MindTemplate{
          
    }
 
-   public ColorRGBA getColor(){
+   public Color getColor(){
 	   return color;
    }
    
@@ -38,4 +37,7 @@ public class EmptyMind implements MindTemplate{
    public int[] getStats(){return this.stats;}
    public String getSpecies(){return this.species;}
    public void setRobit(Robit me){if(this.robit == null) this.robit = me;}
+   public boolean isAlly(String speciesName) {
+	   return this.species.equals(speciesName);
+   }
 }

@@ -170,6 +170,16 @@ public class SensorSuite{
    public int getSightAngle(){return this.sightAngle;}
    public int getSightSense(){return this.sightSense;}
    public SightTargetType getSightTargetType(){return this.sightTargetType;}
+   public int getSightXpos() {	//will return an X coordinate if you arent trying to see a non-allied robit
+	   if(this.sightTarget.getTargetType() != SightTargetType.ENEMY && this.sightTarget.getTargetType() != SightTargetType.ROBIT)
+		   return this.sightTarget.getXpos();
+	   return -1;
+   }
+   public int getSightYpos() {	//will return an Y coordinate if you arent trying to see a non-allied robit
+	   if(this.sightTarget.getTargetType() != SightTargetType.ENEMY && this.sightTarget.getTargetType() != SightTargetType.ROBIT)
+		   return this.sightTarget.getYpos();
+	   return -1;
+   }
    
    //-----------------------------------------------------------------setters
    public void setHearingSense(int[] h){this.hearingSense = h;}
@@ -244,7 +254,7 @@ public class SensorSuite{
 					Robit o = robitMap[yVal][xVal];                             //the Robit in scanning range
 					otherStealth = o.getStealth();                              //others stealth stat
 					otherStealthAddition = (otherStealth-100)/10;
-					if(c.getSpecies().equals(o.getSpecies())){
+					if(c.isAlly(o.getSpecies())){
 						populateSmellSenseArray(allySmellSense,smellMaxRange,dx,dy,1);
 						if(this.sightTargetType == SightTargetType.ALLY) {
 							SightTarget t = new SightTarget(SightTargetType.ALLY,c,xVal,yVal,new GameObject(o));
@@ -327,7 +337,7 @@ public class SensorSuite{
 			else {
 				dx = c.getXpos() - sightTarget.getXpos();
 				dy = c.getYpos() - sightTarget.getYpos();
-				System.out.println("(" + sightTarget.getXpos() + "," + sightTarget.getYpos() + ") (" + dx + "," + dy + ") " + sightTarget.getAngle());
+				//System.out.println("(" + sightTarget.getXpos() + "," + sightTarget.getYpos() + ") (" + dx + "," + dy + ") " + sightTarget.getAngle());
 			}
 		}
 		
