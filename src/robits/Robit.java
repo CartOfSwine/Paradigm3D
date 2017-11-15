@@ -42,6 +42,7 @@ public class Robit{
 	private final int STEALTH;    	//passive stat, determines how easy the creature is to hear/smell to other creatures
 
 	private int qRawIncomingDmg;  	//the ammount of queued incoming damage to be applied in the resolution phase
+	private int qRawHealing;		//the ammount of queued healing to be applied in the resolution phase
 	private int qAttackBuff;		//the percentage based damage beff appplied this tick
 	private int qDefenceBuff;     	//the percentage based damage reduction buff applied this tick
 	private int qSenseBuff;       	//the percentage based sensory range buff applied this tick
@@ -63,6 +64,8 @@ public class Robit{
 	private MindTemplate mind;       //the reference to the player-made mind object the creature uses for decision making
 
 	private SensorSuite sensorSuite;
+	
+	private boolean firstStateThisTick = true;
 
 
 	//=============================================================================Constructors
@@ -138,6 +141,8 @@ public class Robit{
 			energyCost = energyCost * (250-EAT)/100;
 		else if (toDo.isSense())
 			energyCost = energyCost * (250-SENSE)/100;
+		else if (toDo.isFocus())
+			energyCost = energyCost * (250-ATTACK)/100;
 
 		energyCost = energyCost * actionQueue.size();
 
@@ -157,15 +162,24 @@ public class Robit{
 		if(!psk.equals(SECURE_KEY))
 			throw new CheaterException();
 
-		if(this.actionQueue.isEmpty())
-			return true;
+		if(this.actionQueue.isEmpty()) {
+			if(firstStateThisTick)
+				this.qRawHealing = this.MAX_HEALTH/10;
+			return true;	
+		}
+		
+		if(firstStateThisTick && actionQueue.size() == 1)
+			this.qRawHealing = this.MAX_HEALTH/20;
+		
 		Action toDo = actionQueue.removeLast();
 
 		this.qXchange += toDo.xChange;
 		this.qYchange += toDo.yChange;
 
 		this.qDefenceBuff += (int)(toDo.defence * (this.DEFENCE/100.0));
-
+		
+		this.qAttackBuff += (int)(toDo.attack * (this.ATTACK/100.0));
+		
 		this.qSenseBuff += (int)(toDo.sense * (this.SENSE/100.0));
 
 		if(toDo.isEat()){
@@ -180,14 +194,18 @@ public class Robit{
 			}
 		}
 		if(toDo.isAttack()){
+			if(this.qAttackBuff > 100)
+				this.qAttackBuff = 100;
+			
 			for(CordModifier cm : toDo.aoe.locations){
-				boolean didDamage = this.myWorld.damageSquare(this.xPos + cm.xMod, this.yPos + cm.yMod, (int)(toDo.attack * (this.ATTACK/100.0) * ((100 + this.qAttackBuff)/100.0)),SECURE_KEY);
+				boolean didDamage = this.myWorld.damageSquare(this.xPos + cm.xMod, this.yPos + cm.yMod, (int)(toDo.attack * (this.qAttackBuff/100.0) * (this.ATTACK/100.0) * ((100 + this.qAttackBuff)/100.0)),SECURE_KEY);
 				if(didDamage && toDo.singleTarget)
 					continue;
 			}
 		}
 
 		this.lastActionTaken = toDo;
+		this.firstStateThisTick = false;
 		return this.actionQueue.isEmpty();
 	}
 
@@ -203,7 +221,8 @@ public class Robit{
 		//take the incoming damage, muiltiply the reduction percent. 
 		//have a buff of 40? that means you take 60% of qRawIncomingDmg
 		this.health -= this.qRawIncomingDmg *((100-this.qDefenceBuff)/100.0);
-
+		this.health += this.qRawHealing;
+		
 		if(this.myWorld.moveRobitAt(this.xPos, this.yPos, this.qXchange, this.qYchange, SECURE_KEY)){
 			this.xPos =this.myWorld.fc(this.xPos + qXchange);
 			this.yPos =this.myWorld.fc(this.yPos + qYchange);
@@ -211,6 +230,7 @@ public class Robit{
 
 		this.qRawIncomingDmg = 0;
 		this.qDefenceBuff = (int)(this.qDefenceBuff*0.75);
+		this.qAttackBuff = (int)(this.qAttackBuff * 0.75);
 
 		this.qXchange = 0;
 		this.qYchange = 0;
@@ -229,6 +249,7 @@ public class Robit{
 	//-----------------------------------------------------------------tick
 	public void tick(){
 		if(!this.isDead){
+			this.firstStateThisTick = true;
 			try{
 				mind.tick();
 			}

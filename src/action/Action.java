@@ -1,61 +1,72 @@
 package action;
 
 public enum Action{ //NEEDS TO BE BALANCED EVENTUALLY
-   //the following are the meanings of all the action numbers, vars
-   //resource cost, damage, defence buff, max eat ammount,xPos modifier, yPos modifier, effective area, single targeting) 
-   ATTACK_U(10,50,0,0,0,0,0,AOE.UP,true),
-   ATTACK_R(10,50,0,0,0,0,0,AOE.RIGHT,true),
-   ATTACK_D(10,50,0,0,0,0,0,AOE.DOWN,true),
-   ATTACK_L(10,50,0,0,0,0,0,AOE.LEFT,true),
    
-   DEFEND(10,0,50,0,0,0,0),
+   ATTACK_U(BAT.ATTACK,10,50,AOE.UP),
+   ATTACK_R(BAT.ATTACK,10,50,AOE.RIGHT),
+   ATTACK_D(BAT.ATTACK,10,50,AOE.DOWN),
+   ATTACK_L(BAT.ATTACK,10,50,AOE.LEFT),
    
-   EAT_U(8,0,0,30,0,0,0,AOE.UP,true),
-   EAT_R(8,0,0,30,0,0,0,AOE.RIGHT,true),
-   EAT_D(8,0,0,30,0,0,0,AOE.DOWN,true),
-   EAT_L(8,0,0,30,0,0,0,AOE.LEFT,true),
-   EAT_S(8,0,0,30,0,0,0), //note:does not eat oneself, but the square one is standing on
+   DEFEND(BAT.DEFEND,10,50,AOE.SELF),
+   FOCUS(BAT.FOCUS,10,50,AOE.SELF),
    
-   GRAZE(8,0,0,10,0,0,0,AOE.SURROUNDING,false),
+   EAT_U(BAT.EAT,8,30,AOE.UP),
+   EAT_R(BAT.EAT,8,30,AOE.RIGHT),
+   EAT_D(BAT.EAT,8,30,AOE.DOWN),
+   EAT_L(BAT.EAT,8,30,AOE.LEFT),
+   EAT_S(BAT.EAT,8,30,AOE.SELF), //note:does not eat oneself, but the square one is standing on
    
-   OBSERVE(20,0,0,0,0,0,50),           //the high cost is because of the performance cost. lots of additional scan area
+   GRAZE(8,0,0,10,0,0,0,0,AOE.SURROUNDING,false),
    
-   //consider adding diagonal movement?
-   MOVE_U(5,0,0,0,0,-1,0),
-   MOVE_R(5,0,0,0,1,0,0),
-   MOVE_D(5,0,0,0,0,1,0),
-   MOVE_L(5,0,0,0,-1,0,0);
+   OBSERVE(BAT.OBSERVE,50,20,AOE.SELF),           //the high cost is because of the performance cost. lots of additional scan area
+   
+   MOVE_U(BAT.MOVE,5,0,AOE.SELF),
+   MOVE_R(BAT.MOVE,5,1,AOE.SELF),
+   MOVE_D(BAT.MOVE,5,2,AOE.SELF),
+   MOVE_L(BAT.MOVE,5,3,AOE.SELF);
    
    
    //might as well make these public. they are final so they cant get messed with
-   public final int baseCost;    //the base food cost to preform the action
+   public final int baseCost;   //the base food cost to preform the action
    
    public final int attack;  
    public final int defence;
+   public final int focus;
    public final int eat;
-   public final int sense;       //the temporary sensory increase. Percentage based
+   public final int sense;      //the temporary sensory increase. Percentage based
    
-   public final int yChange;     //the change in y cordinates resulting from this action
-   public final int xChange;     //the change in x cordinates resulting from this action
+   public final int yChange;    //the change in y cordinates resulting from this action
+   public final int xChange;    //the change in x cordinates resulting from this action
    
    public final AOE aoe;
    public final boolean singleTarget;  //in the event that the action will cover muiltiple squares, this determines if they are all effected, or only the first one is
                                        //for an example, an attack with a wide AOE but singleTarget=true will only be able to hit one creature regardless of how
                                        //many are in the effective area. with singleTarget = false it will hit every creature, not just the first
-   Action(int baseCost, int attack, int defence,int eat, int xChange, int yChange, int sense){
-      this(baseCost,attack,defence,eat,xChange,yChange,sense,AOE.SELF,true);
+   Action(BAT t, int cost,int num, AOE aoe){
+	   this(cost,
+			   t.getAttack(num),
+			   t.getDefend(num),
+			   t.getFocus(num),
+			   t.getEat(num),
+			   t.getXmod(num),
+			   t.getYmod(num),
+			   t.getSense(num),
+			   aoe,false);
    }
    
-   Action(int baseCost, int attack, int defence,int eat, int xChange, int yChange, int sense, AOE aoe,boolean singleTarget){
+   
+   Action(int baseCost, int attack, int defence, int focus, int eat, int xChange, int yChange, int sense, AOE aoe,boolean singleTarget){
       this.baseCost = baseCost;   
       this.attack = attack;
       this.defence = defence;
+      this.focus = focus;
       this.eat = eat;
       this.yChange = yChange;
       this.xChange = xChange;
       this.sense = sense;
       this.aoe = aoe;
       this.singleTarget = singleTarget;
+      
    }
    
    public static Action getEatAction(int dir) throws IllegalArgumentException {
@@ -114,4 +125,66 @@ public enum Action{ //NEEDS TO BE BALANCED EVENTUALLY
    public boolean isEat(){return this.eat != 0;}
    
    public boolean isSense(){return this.sense != 0;}
+   
+   public boolean isFocus() {return this.focus != 0;}
+}
+
+
+//stands for BasicActionType. shortened for legibility of action constructors
+enum BAT{
+	ATTACK,
+	MOVE,
+	DEFEND,
+	EAT,
+	OBSERVE,
+	FOCUS,
+	SENSE;
+	
+	public int getAttack(int num) {
+		if(this == ATTACK) 
+			return num;
+		return 0;
+	}
+	
+	public int getSense(int num) {
+		if(this == SENSE)
+			return num;
+		return 0;
+	}
+	
+	public int getDefend(int num) {
+		if(this == DEFEND)
+			return num;
+		return 0;
+	}
+	
+	public int getEat(int num) {
+		if(this == EAT)
+			return num;
+		return 0;
+	}
+	
+	public int getObserve(int num) {
+		if(this == OBSERVE)
+			return num;
+		return 0;
+	}
+	
+	public int getFocus(int num) {
+		if(this == FOCUS)
+			return num;
+		return 0;
+	}
+	
+	public int getXmod(int dir) {
+		if(this != MOVE)return 0;
+		if(dir % 2 == 0)return 0;
+		return (dir-2) * -1;
+	}
+	public int getYmod(int dir) {
+		if(this != MOVE)
+			return 0;
+		if(dir % 2 == 1)return 0;
+		return (dir-1);
+	}
 }

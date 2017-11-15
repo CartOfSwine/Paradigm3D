@@ -21,7 +21,7 @@ public class Paradigm extends SimpleApplication {
 	private World sim1;
 	
 	//MUST BE A POWER OF 2!!!!!!!
-	private final static int stageSize = 64;
+	private final static int stageSize = 128;
 	
 	private final static int STEP_TIME = 200;
 	
@@ -50,11 +50,11 @@ public class Paradigm extends SimpleApplication {
 		};
 		//define how many of each creature type will spawn
 		int[] populations = new int[] {
+				50,
+				50,
+				50,
 				0,
-				0,
-				0,
-				0,
-				1
+				0
 		};
 		
 		World preRecord = new World(stageSize,0,contenders, "Password");
