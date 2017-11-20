@@ -1,11 +1,14 @@
 package replay;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 
 import robits.Robit;
 
 
-public class RobitPlaceholder {
+public class RobitPlaceholder implements Serializable{
+	private static final long serialVersionUID = 1L;
+
 	private final String species;
 	
 	private final int MAX_HEALTH; 	//increases the upper limit for health

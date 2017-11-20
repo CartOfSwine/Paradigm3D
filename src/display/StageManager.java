@@ -23,7 +23,7 @@ public class StageManager {
 		Material sunMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
 		sunMat.setColor("Color", ColorRGBA.Yellow);
 		sun.setMaterial(sunMat);
-		sun.setLocalTranslation(new Vector3f(stageSize/2,5,stageSize * -2));
+		sun.setLocalTranslation(new Vector3f(stageSize/2,5,stageSize * -1));
 		stageNode.attachChild(sun);
 		
 		Geometry stage = new Geometry("stage",tile);

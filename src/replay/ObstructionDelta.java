@@ -1,9 +1,12 @@
 package replay;
 
+import java.io.Serializable;
+
 import worldData.Obstruction;
 import worldData.ObstructionType;
 
-public class ObstructionDelta extends Delta {
+public class ObstructionDelta extends Delta implements Serializable{
+	private static final long serialVersionUID = 1L;
 	private final ObstructionType beforeType;
 	private final ObstructionType afterType;
 	

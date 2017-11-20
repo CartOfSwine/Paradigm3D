@@ -141,9 +141,6 @@ public class SimulationRecord implements Serializable {
 		if(recordMode)
 			throw new IllegalStateException("Cannot read from SimulationRecord, in record mode");
 		
-		if(!mapStateIterator.hasPrevious())
-			throw new IllegalStateException("Cannot read next from SimulationRecord, simulation has reached it's end");
-		
 		Robit[][] worldPop = this.attachedWorld.getPopulation();
 		for(int s = 0; s < population.length; s++) {
 			for(int m = 0; m < population[s].length; m++) {
@@ -298,6 +295,11 @@ public class SimulationRecord implements Serializable {
 		r.setIsDead(p.getIsDead(), this.SECURE_KEY);
 		r.setXpos(p.getXpos(),this.SECURE_KEY);
 		r.setYpos(p.getYpos(),this.SECURE_KEY);
+		r.setScore(p.getScore(), SECURE_KEY);
+	}
+	
+	public void readyForSerialization() {
+		this.attachedWorld = null;
 	}
 	
 	public int getSimLength() {

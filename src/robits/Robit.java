@@ -66,6 +66,8 @@ public class Robit{
 	private SensorSuite sensorSuite;
 	
 	private boolean firstStateThisTick = true;
+	
+	private int score = 0;
 
 
 	//=============================================================================Constructors
@@ -189,6 +191,7 @@ public class Robit{
 			for(CordModifier cm : toDo.aoe.locations){
 				eatAmmt = this.myWorld.eatSquare(this.xPos + cm.xMod, this.yPos + cm.yMod, maxEatAmmt ,SECURE_KEY);
 				this.qEnergyChange += (eatAmmt * (this.EAT/100.0));
+				this.score += eatAmmt;
 				if(toDo.singleTarget && eatAmmt != 0)
 					continue;
 			}
@@ -336,6 +339,20 @@ public class Robit{
 
 	public LinkedList<Action> getActionQueue() {
 		return actionQueue;
+	}
+	
+	public int getScore() {
+		return this.score;
+	}
+	
+	public void setScore(int s, String psk) {
+		if(psk.equals(this.SECURE_KEY))
+			this.score = s;
+	}
+	
+	public void changeScore(int change, String psk) {
+		if(psk.equals(this.SECURE_KEY))
+			this.score += change;
 	}
 	
 	public void setEnergy(int e, String psk) {

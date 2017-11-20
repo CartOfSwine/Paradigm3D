@@ -1,8 +1,9 @@
 package worldData;
 
 import java.awt.Color;
+import java.io.Serializable;
 
-public enum ObstructionType{
+public enum ObstructionType implements Serializable{
 	EMPTY(1,Color.WHITE,0,false),
 	PEDESTAL(0.8, Color.BLACK,50,false),
 	WALL(0.3, Color.BLACK,100,true),

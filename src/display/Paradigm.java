@@ -13,6 +13,7 @@ import com.jme3.light.DirectionalLight;
 import com.jme3.terrain.geomipmap.TerrainQuad;
 import entities.*;
 import playerMinds.*;
+import replay.ReplaySaver;
 import replay.SimulationRecord;
 import worldData.World;
 
@@ -21,9 +22,9 @@ public class Paradigm extends SimpleApplication {
 	private World sim1;
 	
 	//MUST BE A POWER OF 2!!!!!!!
-	private final static int stageSize = 128;
+	private final static int stageSize = 256;
 	
-	private final static int STEP_TIME = 200;
+	private final static int STEP_TIME = 50;
 	
 	private static boolean simRunning = true;
 	private static boolean simOver = false;
@@ -59,13 +60,14 @@ public class Paradigm extends SimpleApplication {
 		
 		World preRecord = new World(stageSize,0,contenders, "Password");
 		preRecord.initialize(populations);
-		for(int i = 0; i < 200;i++) {
+		for(int i = 0; i < 1000;i++) {
 			preRecord.tick();
 		}
+		preRecord.getSimulationRecord().readyForSerialization();
+		ReplaySaver.saveReplay(preRecord.getSimulationRecord(), "testReplay.p3d");
+		SimulationRecord s = ReplaySaver.loadReplay("testReplay.p3d");
 		
-		
-		
-		Paradigm app = new Paradigm(preRecord.getSimulationRecord());
+		Paradigm app = new Paradigm(s);
         app.start(); // start the game
         
         try {

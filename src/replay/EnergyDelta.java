@@ -1,6 +1,9 @@
 package replay;
 
-public class EnergyDelta extends Delta {
+import java.io.Serializable;
+
+public class EnergyDelta extends Delta implements Serializable {
+	private static final long serialVersionUID = 1L;
 	private final int beforeValue;
 	private final int afterValue;
 	

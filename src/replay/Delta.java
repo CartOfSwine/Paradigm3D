@@ -1,6 +1,9 @@
 package replay;
 
-public abstract class Delta {
+import java.io.Serializable;
+
+public abstract class Delta implements Serializable{
+	private static final long serialVersionUID = 1L;
 	protected final int xPos;
 	protected final int yPos;
 	

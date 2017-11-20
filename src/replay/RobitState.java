@@ -1,11 +1,16 @@
 package replay;
 
 import java.awt.Color;
+import java.io.Serializable;
 
 import action.Action;
 import robits.Robit;
 
-public class RobitState{
+public class RobitState implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	//A snapshot of a single creature after a single action in a tick
 	private int health;
 	private int energy;
@@ -26,6 +31,8 @@ public class RobitState{
 	private int xPos;
 	private int yPos;
 	
+	private int score;
+	
 	public RobitState(Robit source) {
 		this.health = source.getHealth();
 		this.energy = source.getEnergy();
@@ -43,6 +50,8 @@ public class RobitState{
 		this.isDead = source.getIsDead();
 		this.xPos = source.getXpos();
 		this.yPos = source.getYpos();
+		
+		this.score = source.getScore();
 	}
 	
 	public int getHealth() {return health;}
@@ -55,4 +64,5 @@ public class RobitState{
 	public boolean getIsDead() {return isDead;}
 	public int getXpos() {return xPos;}
 	public int getYpos() {return yPos;}
+	public int getScore() {return this.score;}
 }

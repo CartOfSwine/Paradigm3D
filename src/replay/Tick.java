@@ -1,9 +1,12 @@
 package replay;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
-public class Tick<V> implements Iterable<V>{
+public class Tick<V> implements Iterable<V>, Serializable{
+
+	private static final long serialVersionUID = 1L;
 	private LinkedList<V> states;
 	
 	public Tick() {

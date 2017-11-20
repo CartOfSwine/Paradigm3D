@@ -1,8 +1,10 @@
 package replay;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 
-public class MapChange{
+public class MapChange implements Serializable{
+	private static final long serialVersionUID = 1L;
 		private LinkedList<EnergyDelta> energyChanges;
 		private LinkedList<ObstructionDelta> obstructionChanges;
 		

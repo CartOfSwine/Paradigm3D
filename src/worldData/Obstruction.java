@@ -1,6 +1,9 @@
 package worldData;
 
-public class Obstruction implements Cloneable{
+import java.io.Serializable;
+
+public class Obstruction implements Cloneable, Serializable{
+	private static final long serialVersionUID = 1L;
 	private int curHP;
 	private ObstructionType type;
 	private int xPos;
