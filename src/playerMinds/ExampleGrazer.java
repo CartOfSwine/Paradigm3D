@@ -6,14 +6,14 @@ import java.util.Random;
 import action.Action;
 import robits.Robit;
 import robits.SensorSuite;
-import robits.SightTargetType;
 
 public class ExampleGrazer implements MindTemplate {
 	// Needed by interface
 	private Robit robit;
 	private Color color;
+	private int count = -1;
 	// {MAX_HEALTH, MAX_ENERGY, ATTACK, DEFENCE, SPEED, EAT, SENSE, STEALTH}
-	private int[] stats = { 100, 100, 100, 100, 100, 100, 100, 100 };
+	private int[] stats = { 200, 50, 50, 200, 50, 100, 100, 50 };
 	private final String species = "Wandering Grazer"; // or something like that. preferebly cooler
 
 	// extras for functionality
@@ -31,15 +31,15 @@ public class ExampleGrazer implements MindTemplate {
 
 	public void tick() {
 		this.robit.setColor(Color.BLUE);
-
+		count ++;
+		
+		if(count % 15 == 0) {
+			this.robit.setShoutText(String.valueOf(Math.pow(2, count)), 10);
+		}
 		// Pull sensory information from attached robit for later use
 		SensorSuite senses = this.robit.getSensorSuite();
 		int[] energySmellSense = senses.getEnergySmellSense();
 		int[] energyTouchSense = senses.getEnergyTouchSense();
-
-		// ensure that our sight sense is looking for energy targets
-		if (senses.getSightTargetType() != SightTargetType.ENERGY)
-			senses.setSightTargetType(SightTargetType.ENERGY);
 
 		// check to see if we are allready touching some energy
 		int dir = SensorSuite.findGreatest(energyTouchSense);

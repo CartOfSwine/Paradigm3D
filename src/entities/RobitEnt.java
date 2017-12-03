@@ -4,19 +4,24 @@ import com.jme3.asset.AssetManager;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
+import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
+import com.jme3.scene.Spatial.BatchHint;
+import com.jme3.scene.control.BillboardControl;
+import com.jme3.scene.control.BillboardControl.Alignment;
 import com.jme3.scene.shape.Sphere;
 
 import display.ColorConverter;
+import effects.HealthIndicator;
+import effects.ShoutText;
 import robits.Robit;
 
 //doesnt extend Robit. This is because the worldData is made to be independant of the display data. This class will
 //not be used by the World class so it is kept seperate from 
 public class RobitEnt extends BasicEntity{
 	private final String TEXTURE_LOCAITON;
-	
 	
 	//TODO make robit fly height a static constant
 	private int maxAnimTime;
@@ -28,6 +33,13 @@ public class RobitEnt extends BasicEntity{
 	private Vector3f nextLocation;
 	private long startMoveTime;
 	private long endMoveTime;
+	
+	private Node billboard;
+	private BillboardControl billboardControl;
+	
+	private ShoutText shoutText;
+	private boolean showingText = false;
+	private HealthIndicator healthIndicator;
 	
 	public RobitEnt(AssetManager a, Mesh m, Robit robit, String textureLocation, Node node) {
 		super(node, robit.getWorldSize());
@@ -50,7 +62,7 @@ public class RobitEnt extends BasicEntity{
 		ColorRGBA c = ColorConverter.convertToColorRGBA(robit.getColor());
 		t.setColor("Color", c);
 		//c = ColorConverter.convertToColorRGBA(robit.getGlowColor());
-		t.setColor("GlowColor", c);
+		//t.setColor("GlowColor", c);
 		
 		g.setMaterial(t);
 	
@@ -59,6 +71,22 @@ public class RobitEnt extends BasicEntity{
 		this.mesh = m;
 		
 		this.isMoving = false;
+		
+		billboard = new Node("Billboard");
+        billboardControl = new BillboardControl();
+        billboardControl.setAlignment(Alignment.Screen);
+        billboard.addControl(billboardControl);
+        billboard.setShadowMode(ShadowMode.Off);
+        billboard.setBatchHint(BatchHint.Never);
+        billboard.setLocalTranslation(0, 1, 0);
+        node.attachChild(billboard);
+		
+		healthIndicator = new HealthIndicator(a);
+		billboard.attachChild(healthIndicator.getSpatial());
+		
+		shoutText = new ShoutText(a);
+
+		
 	}
 
 	public boolean update(int maxAnimTime) {
@@ -67,13 +95,28 @@ public class RobitEnt extends BasicEntity{
 		doMove();
 		
 		updateModel();
-		
-		robitIsDead = robit.getIsDead();
-		return robitIsDead;
+
+		return robit.getIsDead();
 	}
 	
 	private void updateModel() {
 		//if(this.robitIsDead)
+		
+		String toSay = this.robit.getShoutText();
+		if(toSay.equals("") && showingText) {
+			billboard.detachChild(shoutText.getNode());
+			showingText = false;
+		}
+		if(!toSay.equals("") && !showingText) {
+			billboard.attachChild(shoutText.getNode());
+			showingText = true;
+		}
+		
+		if(showingText)
+			this.shoutText.setText(this.robit.getShoutText());
+		
+		
+		this.healthIndicator.setLevel(robit.getHealth()/(float)robit.getMaxHealth());
 		
 		if(this.robit.getIsDead()) {
 			this.material.setColor("GlowColor",ColorRGBA.Black);
@@ -117,7 +160,7 @@ public class RobitEnt extends BasicEntity{
 	}
 	
 	public boolean getIsDead() {
-		return (robitIsDead && curLocation.equals(nextLocation));
+		return (this.robit.getIsDead() && curLocation.equals(nextLocation));
 	}
 	
 

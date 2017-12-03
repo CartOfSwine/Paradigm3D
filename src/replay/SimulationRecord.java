@@ -296,6 +296,8 @@ public class SimulationRecord implements Serializable {
 		r.setXpos(p.getXpos(),this.SECURE_KEY);
 		r.setYpos(p.getYpos(),this.SECURE_KEY);
 		r.setScore(p.getScore(), SECURE_KEY);
+		
+		r.setShoutText(p.getShoutText());
 	}
 	
 	public void readyForSerialization() {

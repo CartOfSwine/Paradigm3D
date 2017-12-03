@@ -20,6 +20,8 @@ public class RobitState implements Serializable{
 	
 	private Action actionTaken;
 	
+	private char[] shoutText;
+	
 	//dont want to store actual color objects
 	private int colorR;
 	private int colorG;
@@ -52,6 +54,8 @@ public class RobitState implements Serializable{
 		this.yPos = source.getYpos();
 		
 		this.score = source.getScore();
+		
+		this.shoutText = source.getShoutText().toCharArray();
 	}
 	
 	public int getHealth() {return health;}
@@ -65,4 +69,5 @@ public class RobitState implements Serializable{
 	public int getXpos() {return xPos;}
 	public int getYpos() {return yPos;}
 	public int getScore() {return this.score;}
+	public String getShoutText() {return String.valueOf(this.shoutText);}
 }

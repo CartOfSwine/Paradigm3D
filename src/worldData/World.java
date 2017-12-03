@@ -107,6 +107,7 @@ public class World  {
 				obstructionMap[y][x] = new Obstruction(x,y);
 			}
 		}
+		
 		this.nextTickFlag = true;
 		this.SECURE_KEY = key;
 		

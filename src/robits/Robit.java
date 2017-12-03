@@ -14,6 +14,9 @@ public class Robit{
 	private final String SECURE_KEY;
 	//prevents any instances of the Mind class from changing key parts of the creature
 
+	private String shoutText = "";
+	private int shoutCounter = 0;
+	
 	private int xPos;
 	private int yPos;
 
@@ -224,7 +227,16 @@ public class Robit{
 		//take the incoming damage, muiltiply the reduction percent. 
 		//have a buff of 40? that means you take 60% of qRawIncomingDmg
 		this.health -= this.qRawIncomingDmg *((100-this.qDefenceBuff)/100.0);
-		this.health += this.qRawHealing;
+		if(this.health < 0)this.health = 0;
+		if(this.health == 0){
+			this.isDead = true;
+			this.myWorld.killRobit(this.xPos,this.yPos);
+			this.shoutText = "";
+		}
+		if(!this.isDead) {
+			this.health += this.qRawHealing;
+			if (this.health > this.MAX_HEALTH) this.health = this.MAX_HEALTH;
+		}
 		
 		if(this.myWorld.moveRobitAt(this.xPos, this.yPos, this.qXchange, this.qYchange, SECURE_KEY)){
 			this.xPos =this.myWorld.fc(this.xPos + qXchange);
@@ -243,23 +255,20 @@ public class Robit{
 		@SuppressWarnings("unused")
 		int worldSize = this.myWorld.WORLD_SIZE;      
 
-		if(this.health <= 0){
-			this.isDead = true;
-			this.myWorld.killRobit(this.xPos,this.yPos);
-		}
+		
 	}
 
 	//-----------------------------------------------------------------tick
 	public void tick(){
 		if(!this.isDead){
+			if(this.shoutCounter > 0) this.shoutCounter--;
+			
+			if(this.shoutCounter == 0)this.shoutText = "";
+			
 			this.firstStateThisTick = true;
 			try{
 				mind.tick();
 			}
-			//reenable this once we are up and rolling
-			//catch(CheaterException e){
-			//   System.out.println("Creature " + this.id + " tried to cheat"); 
-			//}
 			catch(Exception e){
 				System.out.println("Creature " + this.id + " encountered a problem and ended exicution prematurly" + e);
 			}
@@ -388,6 +397,23 @@ public class Robit{
 	public void setYpos(int pos, String psk) {
 		if(psk.equals(this.SECURE_KEY))
 			this.yPos = pos;
+	}
+	
+	public void setShoutText(String text,int duration) {
+		if(duration > 0 && duration < 50 && text != null) {
+			if(text.length() > 16)
+				text = text.substring(0, 16);
+			this.shoutCounter = duration;
+			this.shoutText = text;
+		}
+	}
+	
+	public void setShoutText(String text) {
+		setShoutText(text,3);
+	}
+	
+	public String getShoutText() {
+		return this.shoutText;
 	}
 }
 

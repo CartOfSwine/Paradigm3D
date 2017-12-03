@@ -34,9 +34,7 @@ public class RobitHandler {
 	public static void updateRobits(RobitEnt[][] robits, final int STEP_TIME, Node rootNode) {
 		for(int i = 0; i < robits.length; i++) {
 			for(int j = 0; j < robits[i].length; j++) {
-				if(!robits[i][j].getIsDead()) 
-					robits[i][j].update(STEP_TIME);
-				else
+				if(robits[i][j].update(STEP_TIME)) 
 					rootNode.detachChild(robits[i][j].getNode());
 			}
 		}

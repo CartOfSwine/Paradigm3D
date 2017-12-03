@@ -13,7 +13,6 @@ import com.jme3.light.DirectionalLight;
 import com.jme3.terrain.geomipmap.TerrainQuad;
 import entities.*;
 import playerMinds.*;
-import replay.ReplaySaver;
 import replay.SimulationRecord;
 import worldData.World;
 
@@ -24,7 +23,7 @@ public class Paradigm extends SimpleApplication {
 	//MUST BE A POWER OF 2!!!!!!!
 	private final static int stageSize = 256;
 	
-	private final static int STEP_TIME = 50;
+	private final static int STEP_TIME = 200;
 	
 	private static boolean simRunning = true;
 	private static boolean simOver = false;
@@ -37,7 +36,6 @@ public class Paradigm extends SimpleApplication {
 	
 	@SuppressWarnings("unused")
 	private Geometry stage;
-	
 	private TerrainQuad resources;
 
 	
@@ -54,18 +52,17 @@ public class Paradigm extends SimpleApplication {
 				50,
 				50,
 				50,
-				0,
-				0
+				20,
+				20
 		};
 		
 		World preRecord = new World(stageSize,0,contenders, "Password");
 		preRecord.initialize(populations);
-		for(int i = 0; i < 1000;i++) {
+		for (int tick = 0; tick < 500; tick++) {
 			preRecord.tick();
 		}
-		preRecord.getSimulationRecord().readyForSerialization();
-		ReplaySaver.saveReplay(preRecord.getSimulationRecord(), "testReplay.p3d");
-		SimulationRecord s = ReplaySaver.loadReplay("testReplay.p3d");
+		SimulationRecord s = preRecord.getSimulationRecord();
+		s.setRecordingMode(false);
 		
 		Paradigm app = new Paradigm(s);
         app.start(); // start the game
@@ -94,26 +91,14 @@ public class Paradigm extends SimpleApplication {
 	}
 	
 	
-	public Paradigm() {
+	public Paradigm(World w) {
 		//set up two mind objects for the opposing players
-		MindTemplate[] contenders = new MindTemplate[] {
-				new ExampleGrazer(),
-				new ExampleHunter(),
-				new Destroyer(),
-				new SightTest()
-		};
-		//define how many of each creature type will spawn
-		int[] populations = new int[] {
-				1,
-				0,
-				1,
-				0
-		};
+		
         
         //create the simulation with the players
-	    sim1 = new World(stageSize,0,contenders, "Password");
+	    sim1 = w;
 	    //initialize the sim with 10 creatures for each player
-	    sim1.initialize(populations);
+
 	    
 	}
 	

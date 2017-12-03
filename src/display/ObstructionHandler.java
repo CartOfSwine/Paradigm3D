@@ -1,6 +1,9 @@
 package display;
 
 import com.jme3.asset.AssetManager;
+import com.jme3.math.FastMath;
+import com.jme3.math.Quaternion;
+import com.jme3.math.Vector3f;
 import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Box;
@@ -87,7 +90,14 @@ public class ObstructionHandler {
 					od,
 					"Common/MatDefs/Misc/Unshaded.j3md",
 					n, stageSize);
-			oe.getGeometry().setLocalTranslation(0f,.5f,0f);
+			
+			
+			if(od.getType() == ObstructionType.PILLAR) {
+				n.setLocalRotation(new Quaternion().fromAngleAxis(FastMath.PI/2, new Vector3f(1f,0f,0f)));
+				oe.getGeometry().setLocalTranslation(0f,0f,-.5f);
+			}
+			else
+				oe.getGeometry().setLocalTranslation(0f,.5f,0f);
 			
 			n.setLocalTranslation(oe.getCurLocation());
 			

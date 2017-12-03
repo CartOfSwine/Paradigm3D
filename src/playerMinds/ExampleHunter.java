@@ -11,7 +11,7 @@ public class ExampleHunter implements MindTemplate{
    private Color color = Color.RED;
    
    //{MAX_HEALTH, MAX_ENERGY, ATTACK, DEFENCE, SPEED, EAT, SENSE, STEALTH}
-   private int[] stats= {100,100,100,100,100,100,100,100};
+   private int[] stats= {100,100,200,50,50,50,200,50};
    private final String species = "Wandering Hunter"; //or something like that. preferebly cooler
    
    public ExampleHunter(){
@@ -36,11 +36,11 @@ public class ExampleHunter implements MindTemplate{
             this.robit.addAction(toDo);  
             this.robit.addAction(toDo);
             this.robit.addAction(toDo);
-            this.robit.setColor(Color.YELLOW);
+            this.robit.setShoutText("attacking", 10);
             return;
          }
          
-         this.robit.setColor(Color.RED);
+         this.robit.setColor(color);
          
          //no robits adjacent. lets see if there are any big lumps of energy lying around
          dir = SensorSuite.findGreatest(energyTouchSense);
