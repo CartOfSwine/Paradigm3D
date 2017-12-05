@@ -24,7 +24,7 @@ public class EnergyHandler {
 		
 		Material energyMat = new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md");
 		energyMat.setColor("Color", ColorRGBA.Yellow);
-		energyMat.setColor("GlowColor", ColorRGBA.Yellow);
+		//energyMat.setColor("GlowColor", ColorRGBA.Yellow);
 		
 		energys = new TerrainQuad("energy_map",65,stageSize+1,energyHeightMap);
 		energys.setMaterial(energyMat);

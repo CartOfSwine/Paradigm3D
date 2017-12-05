@@ -13,7 +13,9 @@ import com.jme3.scene.control.BillboardControl;
 import com.jme3.scene.control.BillboardControl.Alignment;
 import com.jme3.scene.shape.Sphere;
 
+import action.Action;
 import display.ColorConverter;
+import effects.BeamLaser;
 import effects.HealthIndicator;
 import effects.ShoutText;
 import robits.Robit;
@@ -41,8 +43,21 @@ public class RobitEnt extends BasicEntity{
 	private boolean showingText = false;
 	private HealthIndicator healthIndicator;
 	
+	private boolean lasersOn = false;
+	private boolean AOEattacksOn = false;
+	private boolean eatOn = false;
+	private boolean attackBuffOn = false;
+	private boolean defenceBuffOn = false;
+	private boolean senseBuffOn = false;
+	
+	private BeamLaser laser;
+	
+	AssetManager asset;
+	
 	public RobitEnt(AssetManager a, Mesh m, Robit robit, String textureLocation, Node node) {
 		super(node, robit.getWorldSize());
+		
+		this.asset = a;
 		
 		this.TEXTURE_LOCAITON = textureLocation;
 		
@@ -96,7 +111,38 @@ public class RobitEnt extends BasicEntity{
 		
 		updateModel();
 
+		animateAction(maxAnimTime);
+		
 		return robit.getIsDead();
+	}
+	
+	private void animateAction(int maxAnimTime) {
+		Action action = this.robit.getLastAction();
+		/*
+		boolean renderLaser = (action.isAttack() && action.singleTarget && !lasersOn);
+		boolean renderAOEattack = (action.isAttack() && !action.singleTarget && !AOEattacksOn);
+		boolean renderEat = action.isEat() && !eatOn;
+		boolean renderAbuff = robit.getAttackBuff() > 0 && attackBuffOn;
+		boolean renderDbuff = robit.getDefenceBuff() > 0 && defenceBuffOn;
+		boolean renderSbuff = robit.getSenseBuff() > 0 && senseBuffOn;
+		*/
+
+		Vector3f dest = new Vector3f(10f,0,10f);
+
+		if(!lasersOn) {
+			
+			this.laser = new BeamLaser(asset, ColorRGBA.Red,  ColorConverter.convertToColorRGBA(robit.getColor()),dest , System.currentTimeMillis()+3000, maxAnimTime);
+			this.node.attachChild(laser.getNode());
+			lasersOn = true;
+		}
+		
+		if(laser.update()) {
+			this.node.detachChild(this.laser.getNode());
+			lasersOn = false;
+		}
+		
+		
+		
 	}
 	
 	private void updateModel() {

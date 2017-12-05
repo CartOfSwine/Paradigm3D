@@ -21,9 +21,9 @@ public class Paradigm extends SimpleApplication {
 	private World sim1;
 	
 	//MUST BE A POWER OF 2!!!!!!!
-	private final static int stageSize = 256;
+	private final static int stageSize = 16;
 	
-	private final static int STEP_TIME = 200;
+	private final static int STEP_TIME = 500;
 	
 	private static boolean simRunning = true;
 	private static boolean simOver = false;
@@ -49,22 +49,22 @@ public class Paradigm extends SimpleApplication {
 		};
 		//define how many of each creature type will spawn
 		int[] populations = new int[] {
-				50,
-				50,
-				50,
-				20,
-				20
+				1,
+				0,
+				0,
+				0,
+				0
 		};
 		
 		World preRecord = new World(stageSize,0,contenders, "Password");
 		preRecord.initialize(populations);
-		for (int tick = 0; tick < 500; tick++) {
-			preRecord.tick();
-		}
-		SimulationRecord s = preRecord.getSimulationRecord();
-		s.setRecordingMode(false);
+		//for (int tick = 0; tick < 500; tick++) {
+		//	preRecord.tick();
+		//}
+		//SimulationRecord s = preRecord.getSimulationRecord();
+		//s.setRecordingMode(false);
 		
-		Paradigm app = new Paradigm(s);
+		Paradigm app = new Paradigm(preRecord);
         app.start(); // start the game
         
         try {
@@ -150,10 +150,12 @@ public class Paradigm extends SimpleApplication {
         fpp = new FilterPostProcessor(assetManager);
         bloom = new BloomFilter(BloomFilter.GlowMode.Objects);
         bloom.setDownSamplingFactor(.75f);
+        bloom.setBlurScale(1.5f);
         //fpp.addFilter(bloom);
-        Vector3f lightPos = lightDir.multLocal(-3000);
-        LightScatteringFilter filter = new LightScatteringFilter(lightPos);
-        fpp.addFilter(filter);
+        //Vector3f lightPos = lightDir.multLocal(-3000);
+        //LightScatteringFilter filter = new LightScatteringFilter(lightPos);
+        //fpp.addFilter(filter);
+        fpp.addFilter(bloom);
         viewPort.addProcessor(fpp);
         
         
