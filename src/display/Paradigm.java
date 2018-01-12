@@ -4,7 +4,6 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
 import com.jme3.post.FilterPostProcessor;
 import com.jme3.post.filters.BloomFilter;
-import com.jme3.post.filters.LightScatteringFilter;
 import com.jme3.scene.Geometry;
 
 import org.lwjgl.opengl.GL11;
@@ -21,7 +20,7 @@ public class Paradigm extends SimpleApplication {
 	private World sim1;
 	
 	//MUST BE A POWER OF 2!!!!!!!
-	private final static int stageSize = 16;
+	private final static int stageSize = 64;
 	
 	private final static int STEP_TIME = 500;
 	
@@ -49,9 +48,9 @@ public class Paradigm extends SimpleApplication {
 		};
 		//define how many of each creature type will spawn
 		int[] populations = new int[] {
-				1,
-				0,
-				0,
+				50,
+				30,
+				30,
 				0,
 				0
 		};
@@ -110,7 +109,7 @@ public class Paradigm extends SimpleApplication {
 	
 	public void simRender() {
 
-		RobitHandler.updateRobits(robits, STEP_TIME, rootNode);
+		RobitHandler.updateRobits(robits, STEP_TIME, rootNode,sim1.getStepNum());
 		
 		ObstructionHandler.updateObstructions(sim1,assetManager, obstructions, rootNode);
 		
@@ -155,8 +154,8 @@ public class Paradigm extends SimpleApplication {
         //Vector3f lightPos = lightDir.multLocal(-3000);
         //LightScatteringFilter filter = new LightScatteringFilter(lightPos);
         //fpp.addFilter(filter);
-        fpp.addFilter(bloom);
-        viewPort.addProcessor(fpp);
+        //fpp.addFilter(bloom);
+        //viewPort.addProcessor(fpp);
         
         
         

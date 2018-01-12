@@ -2,9 +2,11 @@
 package action;
 
 public enum AOE{
+   NONE(new CordModifier[] {}),
+	
    SELF(new CordModifier[]{new CordModifier(0,0)}),
    
-   UP(new CordModifier[]{new CordModifier(0,-1)}),
+   UP(new CordModifier[]{new CordModifier(0,-1)}), //change this back
    RIGHT(new CordModifier[]{new CordModifier(1,0)}),
    DOWN(new CordModifier[]{new CordModifier(0,1)}),
    LEFT(new CordModifier[]{new CordModifier(-1,0)}),

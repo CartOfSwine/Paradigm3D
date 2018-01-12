@@ -46,6 +46,9 @@ public class World  {
 	LinkedList<EnergyDelta> energyChanges;
 	LinkedList<ObstructionDelta> obstructionChanges;
 
+	private int tickNum = 0;
+	private int stepNum = 0;
+	
 	private final boolean usingRecord;
 	private SimulationRecord record;
 	
@@ -184,6 +187,9 @@ public class World  {
 					this.record.next();
 				else
 					this.record.previous();
+				
+				this.tickNum = this.record.getTickNum();
+				this.stepNum = this.record.getStepNum();
 			}
 			else {
 				if(nextTickFlag){       
@@ -194,6 +200,7 @@ public class World  {
 						}
 					}
 					recordNewTick = true;
+					this.tickNum++;
 				}
 				try{
 					//will queue up the effects of actions one at a time
@@ -210,6 +217,7 @@ public class World  {
 							robit.resolve(SECURE_KEY);
 						}
 					}
+					this.stepNum++;
 		
 				}
 				catch(CheaterException e){}
@@ -221,6 +229,8 @@ public class World  {
 				
 				this.energyChanges.clear();
 				this.obstructionChanges.clear();
+				
+				this.stepNum++;
 			}
 			updateScores();
 		}
@@ -614,6 +624,14 @@ public class World  {
 	
 	public int[] getScores() {
 		return this.speciesScores;
+	}
+	
+	public int getTickNum() {
+		return this.tickNum;
+	}
+	
+	public int getStepNum() {
+		return this.stepNum;
 	}
 }
 

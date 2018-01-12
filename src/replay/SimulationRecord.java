@@ -18,7 +18,6 @@ public class SimulationRecord implements Serializable {
 	private final int[][] startingEnergyMap;
 	private final Obstruction[][] startingObstrucitonMap;
 	
-	//TODO the World class still doesnt do jackall to support this.  make it happen
 	private ListIterator<Tick<RobitState>>[][] robitTickIterators;
 	private ListIterator<RobitState>[][] robitStateIterators;
 	
@@ -30,6 +29,9 @@ public class SimulationRecord implements Serializable {
 	
 	private int simulationLength = 0;
 	private int worldSize;
+	
+	private int tickNum = 0;
+	private int stepNum = 0;
 	
 	public SimulationRecord(World w, String key) {
 		this.SECURE_KEY = key;
@@ -100,7 +102,9 @@ public class SimulationRecord implements Serializable {
 					r = robitStateIterators[s][m].next();
 				}
 				else {
-					robitStateIterators[s][m] = robitTickIterators[s][m].next().iterator();
+					Tick<RobitState> temp = robitTickIterators[s][m].next();
+					this.tickNum = temp.getTickNum();
+					robitStateIterators[s][m] = temp.iterator();
 					r = robitStateIterators[s][m].next(); //allways at least 1 state per tick
 				}
 				populateRobit(worldPop[s][m],r);
@@ -118,6 +122,7 @@ public class SimulationRecord implements Serializable {
 		
 		LinkedList<EnergyDelta> eDeltas = m.getEnergyChanges();
 		LinkedList<ObstructionDelta> oDeltas = m.getObstructionChanges();
+		stepNum = m.getStepNum();
 		
 		int[][] eMap = this.attachedWorld.getEnergyMap();
 		Obstruction[][] oMap = this.attachedWorld.getObstructionMap();
@@ -151,6 +156,7 @@ public class SimulationRecord implements Serializable {
 				}
 				else {
 					Tick<RobitState> temp = robitTickIterators[s][m].previous();
+					this.tickNum = temp.getTickNum();
 					robitStateIterators[s][m] = temp.iterator(temp.getStates().size());
 					r = robitStateIterators[s][m].previous(); //allways at least 1 state per tick
 				}
@@ -170,6 +176,7 @@ public class SimulationRecord implements Serializable {
 		
 		LinkedList<EnergyDelta> eDeltas = m.getEnergyChanges();
 		LinkedList<ObstructionDelta> oDeltas = m.getObstructionChanges();
+		stepNum = m.getStepNum();
 		
 		int[][] eMap = this.attachedWorld.getEnergyMap();
 		Obstruction[][] oMap = this.attachedWorld.getObstructionMap();
@@ -238,17 +245,18 @@ public class SimulationRecord implements Serializable {
 		if(!recordMode)
 			throw new IllegalStateException("Cannot write to SimulationRecord, not in record mode");
 		this.simulationLength++;
+		this.tickNum++;
 		Robit[][] pop = this.attachedWorld.getPopulation();
 		LinkedList<EnergyDelta> eDeltas = (LinkedList<EnergyDelta>) this.attachedWorld.getEnergyChanges().clone();
 		LinkedList<ObstructionDelta> oDeltas = (LinkedList<ObstructionDelta>) this.attachedWorld.getObstrucitonChanges().clone();
 		
 		for(int s = 0; s < pop.length; s++) {
 			for(int m = 0; m < pop[s].length; m++) {
-				this.population[s][m].recordTick(pop[s][m]);
+				this.population[s][m].recordTick(pop[s][m], this.tickNum);
 			}
 		}
-		Tick<MapChange> t = new Tick<>();
-		t.recordState(new MapChange(eDeltas,oDeltas));
+		Tick<MapChange> t = new Tick<>(this.tickNum);
+		t.recordState(new MapChange(eDeltas,oDeltas,this.stepNum));
 		mapHistory.addLast(t);	
 	}
 	
@@ -256,6 +264,7 @@ public class SimulationRecord implements Serializable {
 		if(!recordMode)
 			throw new IllegalStateException("Cannot write to SimulationRecord, not in record mode");
 
+		this.stepNum++;
 		Robit[][] pop = this.attachedWorld.getPopulation();
 		LinkedList<EnergyDelta> eDeltas = this.attachedWorld.getEnergyChanges();
 		LinkedList<ObstructionDelta> oDeltas = this.attachedWorld.getObstrucitonChanges();
@@ -264,8 +273,7 @@ public class SimulationRecord implements Serializable {
 				this.population[s][m].recordState(pop[s][m]);
 			}
 		}
-		mapHistory.getLast().recordState(new MapChange(eDeltas,oDeltas));
-
+		mapHistory.getLast().recordState(new MapChange(eDeltas,oDeltas, this.stepNum));
 	}
 	
 	private boolean checkPopulationSizes(Robit[][] r) {
@@ -328,6 +336,15 @@ public class SimulationRecord implements Serializable {
 		return this.startingEnergyMap;
 	}
 	
-	
+	public int getTickNum() {
+		if(recordMode)
+			throw new IllegalStateException("Cannot read from SimulationRecord, in record mode");
+		return this.tickNum;
+	}
+	public int getStepNum() {
+		if(recordMode)
+			throw new IllegalStateException("Cannot read from SimulationRecord, in record mode");
+		return this.stepNum;
+	}
 	
 }

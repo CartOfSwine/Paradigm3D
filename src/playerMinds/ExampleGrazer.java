@@ -11,11 +11,11 @@ public class ExampleGrazer implements MindTemplate {
 	// Needed by interface
 	private Robit robit;
 	private Color color;
-	private int count = -1;
 	// {MAX_HEALTH, MAX_ENERGY, ATTACK, DEFENCE, SPEED, EAT, SENSE, STEALTH}
 	private int[] stats = { 200, 50, 50, 200, 50, 100, 100, 50 };
 	private final String species = "Wandering Grazer"; // or something like that. preferebly cooler
-
+	private int tickNum = -1;
+	
 	// extras for functionality
 
 	private int searchDir = 0;
@@ -30,12 +30,17 @@ public class ExampleGrazer implements MindTemplate {
 	}
 
 	public void tick() {
-		this.robit.setColor(Color.BLUE);
-		count ++;
+		if(tickNum == 0)
+			this.robit.setColor(Color.BLUE);
 		
-		if(count % 15 == 0) {
-			this.robit.setShoutText(String.valueOf(Math.pow(2, count)), 10);
+		this.robit.setShoutText(String.valueOf(this.robit.getDefenceBuff()), 1);
+		
+		this.tickNum++;
+		if(tickNum % 3 == 0) {
+			this.robit.addAction(Action.DEFEND);
+			return;
 		}
+			
 		// Pull sensory information from attached robit for later use
 		SensorSuite senses = this.robit.getSensorSuite();
 		int[] energySmellSense = senses.getEnergySmellSense();

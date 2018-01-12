@@ -15,7 +15,7 @@ import com.jme3.scene.shape.Sphere;
 
 import action.Action;
 import display.ColorConverter;
-import effects.BeamLaser;
+import effects.ActionEffectManager;
 import effects.HealthIndicator;
 import effects.ShoutText;
 import robits.Robit;
@@ -43,19 +43,16 @@ public class RobitEnt extends BasicEntity{
 	private boolean showingText = false;
 	private HealthIndicator healthIndicator;
 	
-	private boolean lasersOn = false;
-	private boolean AOEattacksOn = false;
-	private boolean eatOn = false;
-	private boolean attackBuffOn = false;
-	private boolean defenceBuffOn = false;
-	private boolean senseBuffOn = false;
+	private ActionEffectManager fxManager;
 	
-	private BeamLaser laser;
+	int lastTick = -1;
 	
 	AssetManager asset;
 	
 	public RobitEnt(AssetManager a, Mesh m, Robit robit, String textureLocation, Node node) {
 		super(node, robit.getWorldSize());
+		
+		fxManager = new ActionEffectManager(a, node, robit);
 		
 		this.asset = a;
 		
@@ -69,7 +66,7 @@ public class RobitEnt extends BasicEntity{
 		this.nextLocation = new Vector3f(robit.getXpos(),0.5f,robit.getYpos());
 		
 		if(m == null)
-			m = new Sphere(10,10,0.5f);
+			m = new Sphere(10,10,0.3f);
 		
 		Geometry g = new Geometry("creatureModel",m);
 		Material t = new Material(a, TEXTURE_LOCAITON);
@@ -100,49 +97,27 @@ public class RobitEnt extends BasicEntity{
 		billboard.attachChild(healthIndicator.getSpatial());
 		
 		shoutText = new ShoutText(a);
-
-		
 	}
 
-	public boolean update(int maxAnimTime) {
+	public boolean update(int maxAnimTime, int tickNum) {
 		this.maxAnimTime = maxAnimTime;
 		
 		doMove();
 		
 		updateModel();
 
-		animateAction(maxAnimTime);
+		animateAction(maxAnimTime, tickNum);
 		
 		return robit.getIsDead();
 	}
 	
-	private void animateAction(int maxAnimTime) {
-		Action action = this.robit.getLastAction();
-		/*
-		boolean renderLaser = (action.isAttack() && action.singleTarget && !lasersOn);
-		boolean renderAOEattack = (action.isAttack() && !action.singleTarget && !AOEattacksOn);
-		boolean renderEat = action.isEat() && !eatOn;
-		boolean renderAbuff = robit.getAttackBuff() > 0 && attackBuffOn;
-		boolean renderDbuff = robit.getDefenceBuff() > 0 && defenceBuffOn;
-		boolean renderSbuff = robit.getSenseBuff() > 0 && senseBuffOn;
-		*/
-
-		Vector3f dest = new Vector3f(10f,0,10f);
-
-		if(!lasersOn) {
-			
-			this.laser = new BeamLaser(asset, ColorRGBA.Red,  ColorConverter.convertToColorRGBA(robit.getColor()),dest , System.currentTimeMillis()+3000, maxAnimTime);
-			this.node.attachChild(laser.getNode());
-			lasersOn = true;
+	private void animateAction(int maxAnimTime, int tickNum) {
+		if(tickNum != this.lastTick) {
+			this.lastTick = tickNum;
+			Action action = this.robit.getLastAction();
+			fxManager.animateAction(action, System.currentTimeMillis(), maxAnimTime, this.robit.getAttacksBeforeContact());
 		}
-		
-		if(laser.update()) {
-			this.node.detachChild(this.laser.getNode());
-			lasersOn = false;
-		}
-		
-		
-		
+		fxManager.update();
 	}
 	
 	private void updateModel() {

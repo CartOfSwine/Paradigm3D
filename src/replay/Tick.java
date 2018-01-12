@@ -8,9 +8,11 @@ public class Tick<V> implements Iterable<V>, Serializable{
 
 	private static final long serialVersionUID = 1L;
 	private LinkedList<V> states;
+	private int tickNum;
 	
-	public Tick() {
+	public Tick(int tickNum) {
 		states = new LinkedList<>();
+		this.tickNum = tickNum;
 	}
 	
 	public void recordState(V o) {
@@ -28,5 +30,9 @@ public class Tick<V> implements Iterable<V>, Serializable{
 	
 	public ListIterator<V> iterator(int startIndex) {
 		return states.listIterator(startIndex);
+	}
+	
+	public int getTickNum() {
+		return this.tickNum;
 	}
 }

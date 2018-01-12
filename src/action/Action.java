@@ -2,28 +2,28 @@ package action;
 
 public enum Action{ //NEEDS TO BE BALANCED EVENTUALLY
    
-   ATTACK_U(BAT.ATTACK,10,15,AOE.UP),
-   ATTACK_R(BAT.ATTACK,10,15,AOE.RIGHT),
-   ATTACK_D(BAT.ATTACK,10,15,AOE.DOWN),
-   ATTACK_L(BAT.ATTACK,10,15,AOE.LEFT),
+   ATTACK_U(BAT.ATTACK,10,15,AOE.UP,AOE.NONE),
+   ATTACK_R(BAT.ATTACK,10,15,AOE.RIGHT,AOE.NONE),
+   ATTACK_D(BAT.ATTACK,10,15,AOE.DOWN,AOE.NONE),
+   ATTACK_L(BAT.ATTACK,10,15,AOE.LEFT,AOE.NONE),
    
-   DEFEND(BAT.DEFEND,10,50,AOE.SELF),
-   FOCUS(BAT.FOCUS,10,50,AOE.SELF),
+   DEFEND(BAT.DEFEND,10,50,AOE.NONE,AOE.NONE),
+   FOCUS(BAT.FOCUS,10,50,AOE.NONE,AOE.NONE),
    
-   EAT_U(BAT.EAT,8,30,AOE.UP),
-   EAT_R(BAT.EAT,8,30,AOE.RIGHT),
-   EAT_D(BAT.EAT,8,30,AOE.DOWN),
-   EAT_L(BAT.EAT,8,30,AOE.LEFT),
-   EAT_S(BAT.EAT,8,30,AOE.SELF), //note:does not eat oneself, but the square one is standing on
+   EAT_U(BAT.EAT,8,30,AOE.NONE,AOE.UP),
+   EAT_R(BAT.EAT,8,30,AOE.NONE,AOE.RIGHT),
+   EAT_D(BAT.EAT,8,30,AOE.NONE,AOE.DOWN),
+   EAT_L(BAT.EAT,8,30,AOE.NONE,AOE.LEFT),
+   EAT_S(BAT.EAT,8,30,AOE.NONE,AOE.SELF), //note:does not eat oneself, but the square one is standing on
    
-   GRAZE(8,0,0,10,0,0,0,0,AOE.SURROUNDING,false),
+   GRAZE(8,0,0,10,0,0,0,0,AOE.NONE,AOE.SURROUNDING,false),
    
-   OBSERVE(BAT.OBSERVE,50,20,AOE.SELF),           //the high cost is because of the performance cost. lots of additional scan area
+   OBSERVE(BAT.OBSERVE,50,20,AOE.NONE,AOE.NONE),           //the high cost is because of the performance cost. lots of additional scan area
    
-   MOVE_U(BAT.MOVE,5,0,AOE.SELF),
-   MOVE_R(BAT.MOVE,5,1,AOE.SELF),
-   MOVE_D(BAT.MOVE,5,2,AOE.SELF),
-   MOVE_L(BAT.MOVE,5,3,AOE.SELF);
+   MOVE_U(BAT.MOVE,5,0,AOE.NONE,AOE.NONE),
+   MOVE_R(BAT.MOVE,5,1,AOE.NONE,AOE.NONE),
+   MOVE_D(BAT.MOVE,5,2,AOE.NONE,AOE.NONE),
+   MOVE_L(BAT.MOVE,5,3,AOE.NONE,AOE.NONE);
    
    
    //might as well make these public. they are final so they cant get messed with
@@ -38,11 +38,13 @@ public enum Action{ //NEEDS TO BE BALANCED EVENTUALLY
    public final int yChange;    //the change in y cordinates resulting from this action
    public final int xChange;    //the change in x cordinates resulting from this action
    
-   public final AOE aoe;
+   public final AOE attackAOE;
+   public final AOE eatAOE;
+   
    public final boolean singleTarget;  //in the event that the action will cover muiltiple squares, this determines if they are all effected, or only the first one is
                                        //for an example, an attack with a wide AOE but singleTarget=true will only be able to hit one creature regardless of how
                                        //many are in the effective area. with singleTarget = false it will hit every creature, not just the first
-   Action(BAT t, int cost,int num, AOE aoe){
+   Action(BAT t, int cost,int num, AOE aAOE, AOE eAOE){
 	   this(cost,
 			   t.getAttack(num),
 			   t.getDefend(num),
@@ -51,11 +53,11 @@ public enum Action{ //NEEDS TO BE BALANCED EVENTUALLY
 			   t.getXmod(num),
 			   t.getYmod(num),
 			   t.getSense(num),
-			   aoe,false);
+			   aAOE, eAOE,false);
    }
    
    
-   Action(int baseCost, int attack, int defence, int focus, int eat, int xChange, int yChange, int sense, AOE aoe,boolean singleTarget){
+   Action(int baseCost, int attack, int defence, int focus, int eat, int xChange, int yChange, int sense, AOE attackAOE, AOE eatAOE,boolean singleTarget){
       this.baseCost = baseCost;   
       this.attack = attack;
       this.defence = defence;
@@ -64,7 +66,8 @@ public enum Action{ //NEEDS TO BE BALANCED EVENTUALLY
       this.yChange = yChange;
       this.xChange = xChange;
       this.sense = sense;
-      this.aoe = aoe;
+      this.attackAOE = attackAOE;
+      this.eatAOE = eatAOE;
       this.singleTarget = singleTarget;
       
    }

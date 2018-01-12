@@ -57,8 +57,8 @@ public class RobitPlaceholder implements Serializable{
 		history = new LinkedList<>();
 	}
 	
-	public void recordTick(Robit r) {
-		this.history.addLast(new Tick<>());
+	public void recordTick(Robit r, int tickNum) {
+		this.history.addLast(new Tick<>(tickNum));
 		recordState(r);
 	}
 	

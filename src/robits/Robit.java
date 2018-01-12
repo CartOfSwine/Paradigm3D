@@ -72,6 +72,8 @@ public class Robit{
 	
 	private int score = 0;
 
+	private int attacksBeforeContact = 0;	//god i hate that. this is a workaround to make singleTarget muiltiple AOE attacks looks good.
+	 										//still a better solution than adding another into to the replaySaver and injecting it each tick. fuck
 
 	//=============================================================================Constructors
 	public Robit(RobitPlaceholder p,  int worldSize, String key) {
@@ -177,21 +179,26 @@ public class Robit{
 			this.qRawHealing = this.MAX_HEALTH/20;
 		
 		Action toDo = actionQueue.removeLast();
-
+		this.lastActionTaken = toDo;
+		
 		this.qXchange += toDo.xChange;
 		this.qYchange += toDo.yChange;
 
 		this.qDefenceBuff += (int)(toDo.defence * (this.DEFENCE/100.0));
 		
 		this.qAttackBuff += (int)(toDo.attack * (this.ATTACK/100.0));
+		if(qAttackBuff > 100)
+			qAttackBuff = 200;
 		
 		this.qSenseBuff += (int)(toDo.sense * (this.SENSE/100.0));
+		if(qSenseBuff > 100)
+			qSenseBuff = 100;
 
 		if(toDo.isEat()){
 			int eatAmmt;
 			int maxEatAmmt = (int)(toDo.eat * (this.EAT/100.0));
 
-			for(CordModifier cm : toDo.aoe.locations){
+			for(CordModifier cm : toDo.eatAOE.locations){
 				eatAmmt = this.myWorld.eatSquare(this.xPos + cm.xMod, this.yPos + cm.yMod, maxEatAmmt ,SECURE_KEY);
 				this.qEnergyChange += (eatAmmt * (this.EAT/100.0));
 				this.score += eatAmmt;
@@ -203,14 +210,16 @@ public class Robit{
 			if(this.qAttackBuff > 100)
 				this.qAttackBuff = 100;
 			
-			for(CordModifier cm : toDo.aoe.locations){
+			int i;
+			for(i = 0; i < toDo.attackAOE.locations.length;i++){
+				CordModifier cm = toDo.attackAOE.locations[i];
 				boolean didDamage = this.myWorld.damageSquare(this.xPos + cm.xMod, this.yPos + cm.yMod, (int)(toDo.attack * (this.qAttackBuff/100.0) * (this.ATTACK/100.0) * ((100 + this.qAttackBuff)/100.0)),SECURE_KEY);
 				if(didDamage && toDo.singleTarget)
 					continue;
 			}
+			this.attacksBeforeContact = i;
 		}
 
-		this.lastActionTaken = toDo;
 		this.firstStateThisTick = false;
 		return this.actionQueue.isEmpty();
 	}
@@ -264,6 +273,8 @@ public class Robit{
 			if(this.shoutCounter > 0) this.shoutCounter--;
 			
 			if(this.shoutCounter == 0)this.shoutText = "";
+			
+			this.qSenseBuff = 0;
 			
 			this.firstStateThisTick = true;
 			try{
@@ -414,6 +425,10 @@ public class Robit{
 	
 	public String getShoutText() {
 		return this.shoutText;
+	}
+	
+	public int getAttacksBeforeContact() {
+		return this.attacksBeforeContact;
 	}
 }
 

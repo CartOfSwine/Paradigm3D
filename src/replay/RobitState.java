@@ -7,9 +7,6 @@ import action.Action;
 import robits.Robit;
 
 public class RobitState implements Serializable{
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 	//A snapshot of a single creature after a single action in a tick
 	private int health;
